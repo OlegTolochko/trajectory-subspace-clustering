@@ -31,5 +31,5 @@ class FeatureExtractor(nn.Module):
         x = x.squeeze(-1)
         print(x.shape)
         
-        x = self.conv_layers(x)
+        x = self.linear_layers(x)
         return x
