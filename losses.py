@@ -1,4 +1,5 @@
 import torch
+import torch.nn.functional as F
 
 def L_InfoNCE(features, labels, temperature=1.0, eps=1e-9):
     batch_size = features.shape[0]
@@ -38,8 +39,10 @@ def pairwise_squared_l2(X):
     return dists
 
 
-def L_Residual():
-    return None
+def L_Residual(x_original, x_reconstructed):
+    assert x_original.shape == x_reconstructed.shape
+    loss = F.mse_loss(x_original, x_reconstructed, reduction='mean')
+    return loss
 
 def L_FeatDiff():
     return None
