@@ -17,3 +17,10 @@ def train_model(training_samples, batch_size=64, epochs=50, learning_rate=0.001)
     full_model = TrajectoryEmbeddingModel()
     
     return None
+
+def prepare_data():
+    return None
+
+def main():
+    return None
+    

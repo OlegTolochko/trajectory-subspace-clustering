@@ -40,9 +40,10 @@ def pairwise_squared_l2(X):
 
 
 def L_Residual(x_original, x_reconstructed):
-    assert x_original.shape == x_reconstructed.shape
     loss = F.mse_loss(x_original, x_reconstructed, reduction='mean')
     return loss
 
-def L_FeatDiff():
-    return None
+# same implementation as L_Residual
+def L_FeatDiff(f_original, f_reconstructed):
+    loss = F.mse_loss(f_original, f_reconstructed, reduction='mean')
+    return loss
