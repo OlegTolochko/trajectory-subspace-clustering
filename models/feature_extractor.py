@@ -25,11 +25,9 @@ class FeatureExtractor(nn.Module):
 
     def forward(self, x):
         x = self.conv_layers(x)
-        print(x.shape)
         
         x = self.max_pool(x)
         x = x.squeeze(-1)
-        print(x.shape)
         
         x = self.linear_layers(x)
         return x
