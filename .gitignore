@@ -1,2 +1,4 @@
 data/
 out/
+__pycache__/
+models/__pycache__

@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torch
-from feature_extractor import FeatureExtractor
-from subspace_estimator import SubspaceEstimator
+from .feature_extractor import FeatureExtractor
+from .subspace_estimator import SubspaceEstimator
 
 class TrajectoryEmbeddingModel(nn.Module):
     def __init__(self):
