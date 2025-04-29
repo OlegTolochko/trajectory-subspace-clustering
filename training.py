@@ -161,12 +161,14 @@ class Hopkins155(Dataset):
         trajectories_tensor = torch.tensor(trajectories, dtype=torch.float32)
         labels_tensor = torch.tensor(labels, dtype=torch.long)
         time_tensor = time_vectors.long()
+        num_clusters = len(torch.unique(labels_tensor))
         
         return {
             'trajectories': trajectories_tensor,
             'labels': labels_tensor,
             'times': time_tensor,
-            'name': seq_name
+            'name': seq_name,
+            'num_clusters': num_clusters
         }
 
 def main():
