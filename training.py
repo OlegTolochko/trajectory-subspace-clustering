@@ -5,21 +5,25 @@ from losses import L_FeatDiff, L_InfoNCE, L_Residual
 import torch.optim as optim
 from torch.utils.data import DataLoader, Dataset
 import torch.nn.functional as F
+from torch.optim.lr_scheduler import ExponentialLR
 import os
 import scipy
 import numpy as np
 
 def reconstruct_x(x_original, B_estimated):
-    batch_size, seq_len, _ = x_original.shape
-    x_flattend = x_original.reshape(batch_size, 2*seq_len, 1)
-    
-    B_dagger = torch.linalg.pinv(B_estimated)
-    c = torch.bmm(B_dagger, x_flattend)
-    x_reconst_flat = torch.bmm(B_estimated, c)
-    x_reconst = x_reconst_flat.reshape(batch_size, seq_len, 2)
+    try:
+        batch_size, seq_len, _ = x_original.shape
+        x_flattend = x_original.reshape(batch_size, 2*seq_len, 1)
+        
+        B_dagger = torch.linalg.pinv(B_estimated)
+        c = torch.bmm(B_dagger, x_flattend)
+        x_reconst_flat = torch.bmm(B_estimated, c)
+        x_reconst = x_reconst_flat.reshape(batch_size, seq_len, 2)
+    except:
+        print("Error occured in x reconstruction.")
     return x_reconst
 
-def train_model(batch_size=1, pretraining_epochs=10, full_epochs=20, learning_rate=0.001):
+def train_model(batch_size=1, pretraining_epochs=20, full_epochs=50, learning_rate=0.001):
     full_model = TrajectoryEmbeddingModel()
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -27,6 +31,8 @@ def train_model(batch_size=1, pretraining_epochs=10, full_epochs=20, learning_ra
     full_model = full_model.to(device)
     optimizer_stage1 = optim.Adam(full_model.feature_extractor.parameters(), lr=learning_rate, weight_decay=1e-5)
     optimizer_stage2 = optim.Adam(full_model.parameters(), lr=learning_rate, weight_decay=1e-5)
+    scheduler_stage1 = ExponentialLR(optimizer_stage1, gamma=0.999)
+    scheduler_stage2 = ExponentialLR(optimizer_stage2, gamma=0.999)
     
     train_dataset = Hopkins155()
     train_loader = DataLoader(train_dataset,
@@ -52,13 +58,14 @@ def train_model(batch_size=1, pretraining_epochs=10, full_epochs=20, learning_ra
             # model input: (Batch=P, Channels=2, SeqLen=F)
             x_permuted = seq_x.permute(0, 2, 1) # (P, 2, F)
             f = full_model.feature_extractor(x_permuted)
-            # normalization of the f vectors could be performed here
-            loss = L_InfoNCE(f, seq_labels)
+            f_norm =  F.normalize(f, p=2, dim=1)
+            loss = L_InfoNCE(f_norm, seq_labels)
             loss.backward()
             optimizer_stage1.step()
             epoch_loss_stage1 += loss.item()
             num_seq_processed += 1
-            
+        
+        scheduler_stage1.step()
         avg_epoch_loss = epoch_loss_stage1 / num_seq_processed if num_seq_processed > 0 else 0.0
         print(f"Pretraining Epoch {epoch + 1}/{pretraining_epochs}, Avg Loss: {avg_epoch_loss:.4f}")
 
@@ -84,15 +91,15 @@ def train_model(batch_size=1, pretraining_epochs=10, full_epochs=20, learning_ra
             x_recostructed = reconstruct_x(seq_x, B) # (P, F, 2)
             x_recostructed_permuted = x_recostructed.permute(0, 2, 1)
             
-            loss_infoNCE = L_InfoNCE(v, seq_labels)
+            loss_infoNCE = L_InfoNCE(v_norm, seq_labels)
             loss_residual = L_Residual(x_original=seq_x, x_reconstructed=x_recostructed)
             
             f_reconstructed = full_model.feature_extractor(x_recostructed_permuted)
             loss_featdiff = L_FeatDiff(f_original=f, f_reconstructed=f_reconstructed)
             
-            w_info = 1.0
-            w_res = 0.5
-            w_feat = 0.5
+            w_info = 0.1
+            w_res = 1.0
+            w_feat = 1.0
 
             total_loss = (w_info * loss_infoNCE + w_res * loss_residual + w_feat * loss_featdiff)
             total_loss.backward()
@@ -100,6 +107,7 @@ def train_model(batch_size=1, pretraining_epochs=10, full_epochs=20, learning_ra
             epoch_loss_stage2 += total_loss.item()
             num_seq_processed += 1
         
+        scheduler_stage2.step()
         avg_epoch_loss = epoch_loss_stage2 / num_seq_processed if num_seq_processed > 0 else 0.0
         print(f"Full Training Epoch {epoch + 1}/{full_epochs}, Avg Loss: {avg_epoch_loss:.4f}")
 
@@ -178,7 +186,7 @@ def main():
     else:
         print("Model training failed.")
     
-    pytorch_save_path = 'out/models/trained_model_weights.pt'
+    pytorch_save_path = 'out/models/trained_model_weights_normalized.pt'
     print(f"Saving model state_dict to {pytorch_save_path}...")
     torch.save(trained_model.state_dict(), pytorch_save_path)
     print("Saved.")
