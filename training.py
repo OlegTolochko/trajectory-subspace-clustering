@@ -3,12 +3,14 @@ from models.trajectory_embedder import TrajectoryEmbeddingModel
 from models.subspace_estimator import SubspaceEstimator
 from losses import L_FeatDiff, L_InfoNCE, L_Residual
 import torch.optim as optim
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader
 import torch.nn.functional as F
 from torch.optim.lr_scheduler import ExponentialLR
 import os
-import scipy
 import numpy as np
+from sklearn.model_selection import train_test_split
+from inference import compare_all_clustering_methods
+from datasets import Hopkins155
 
 def reconstruct_x(x_original, B_estimated):
     try:
@@ -23,7 +25,7 @@ def reconstruct_x(x_original, B_estimated):
         print("Error occured in x reconstruction.")
     return x_reconst
 
-def train_model(batch_size=1, pretraining_epochs=20, full_epochs=50, learning_rate=0.001):
+def train_model(train_set, batch_size=1, pretraining_epochs=20, full_epochs=50, learning_rate=0.001):
     full_model = TrajectoryEmbeddingModel()
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -34,14 +36,13 @@ def train_model(batch_size=1, pretraining_epochs=20, full_epochs=50, learning_ra
     scheduler_stage1 = ExponentialLR(optimizer_stage1, gamma=0.999)
     scheduler_stage2 = ExponentialLR(optimizer_stage2, gamma=0.999)
     
-    train_dataset = Hopkins155()
-    train_loader = DataLoader(train_dataset,
+    train_loader = DataLoader(train_set,
                         batch_size=batch_size,
                         shuffle=True,
                         num_workers=8,
                         pin_memory=True,
                         persistent_workers=True if os.name == 'nt' else False)
-
+    
     # pretraining:
     for epoch in range(pretraining_epochs):
         epoch_loss_stage1 = 0.0
@@ -55,11 +56,12 @@ def train_model(batch_size=1, pretraining_epochs=20, full_epochs=50, learning_ra
             if num_points <= 1: continue
             
             optimizer_stage1.zero_grad()
+            mask = torch.rand_like(seq_x[..., :1]) > 0.25  # 25 % dropout
+            seq_x = seq_x * mask
             # model input: (Batch=P, Channels=2, SeqLen=F)
             x_permuted = seq_x.permute(0, 2, 1) # (P, 2, F)
             f = full_model.feature_extractor(x_permuted)
-            f_norm =  F.normalize(f, p=2, dim=1)
-            loss = L_InfoNCE(f_norm, seq_labels)
+            loss = L_InfoNCE(f, seq_labels)
             loss.backward()
             optimizer_stage1.step()
             epoch_loss_stage1 += loss.item()
@@ -113,78 +115,24 @@ def train_model(batch_size=1, pretraining_epochs=20, full_epochs=50, learning_ra
 
     return full_model
 
-class Hopkins155(Dataset):
-    def __init__(self, root_dir="data/Hopkins155/"):
-        self.root_dir = root_dir
-        self.sequence_data = []
-        
-        print(f"Loading Hopkins155 data from: {root_dir}")
-        for seq_name in sorted(os.listdir(root_dir)):
-            seq_path = os.path.join(root_dir, seq_name)
-            if os.path.isdir(seq_path):
-                mat_file_name = f"{seq_name}_truth.mat"
-                mat_file_path = os.path.join(seq_path, mat_file_name)
-            
-            try:
-                mat_data = scipy.io.loadmat(mat_file_path)
-                x_data_load = None
-                if 'x' in mat_data:
-                    x_data_load = mat_data['x']
-                
-                coords_2PF = x_data_load[0:2, :, :] # (2, P, F)
-                num_points = coords_2PF.shape[1]
-                num_frames = coords_2PF.shape[2]
-                trajectories = np.transpose(coords_2PF, (1, 2, 0)) # (P, F, 2)
-                base_time = torch.arange(num_frames)
-                time_vectors = base_time.expand(num_points, -1)
-                
-                if 's' in mat_data:
-                    labels_load = mat_data['s'].reshape(-1)
-
-                self.sequence_data.append({
-                    'name': seq_name,
-                    'trajectories': trajectories.astype(np.float32),
-                    'times': time_vectors,
-                    'labels': labels_load.astype(np.int64)
-                })
-                
-            except Exception as e:
-                print(f"Error loading or processing {mat_file_path}: {e}")
-                
-        print(f"finished loading data for {len(self.sequence_data)} sequences")
-
-    def __len__(self):
-        return len(self.sequence_data)
-
-    def __getitem__(self, idx):
-        if idx >= len(self.sequence_data):
-            raise IndexError("Index out of bounds")
-
-        seq_info = self.sequence_data[idx]
-        trajectories = seq_info['trajectories']
-        labels = seq_info['labels']
-        seq_name = seq_info['name']
-        time_vectors = seq_info['times']
-        
-        trajectories_tensor = torch.tensor(trajectories, dtype=torch.float32)
-        labels_tensor = torch.tensor(labels, dtype=torch.long)
-        time_tensor = time_vectors.long()
-        num_clusters = len(torch.unique(labels_tensor))
-        
-        return {
-            'trajectories': trajectories_tensor,
-            'labels': labels_tensor,
-            'times': time_tensor,
-            'name': seq_name,
-            'num_clusters': num_clusters
-        }
-
+def eval_model(model, val_set):
+    compare_all_clustering_methods(model=model, data=val_set)
+    
 def main():
-    trained_model = train_model()
+    train_dataset = Hopkins155()
+
+    seq_ids = list(range(len(train_dataset)))
+    train_ids, val_ids = train_test_split(seq_ids, test_size=0.2, random_state=42, shuffle=True)
+    train_set = torch.utils.data.Subset(train_dataset, train_ids)
+    val_set   = torch.utils.data.Subset(train_dataset, val_ids)
+    
+    trained_model = train_model(train_set=train_set)
     if trained_model:
         print("Model training complete.")
     else:
         print("Model training failed.")
+    
+    eval_model(model=trained_model, val_set=val_set)
     
     pytorch_save_path = 'out/models/trained_model_weights_normalized.pt'
     print(f"Saving model state_dict to {pytorch_save_path}...")

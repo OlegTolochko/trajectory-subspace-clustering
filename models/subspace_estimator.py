@@ -17,7 +17,7 @@ class SubspaceEstimator(nn.Module):
 
         
         self.mu_basis = nn.Parameter(torch.randn(self.num_basis_functions))
-        self.alpha_basis = nn.Parameter(torch.randn(self.num_basis_functions))
+        self.alpha_basis = nn.Parameter(torch.zeros(self.num_basis_functions))
         self.beta_basis = nn.Parameter(torch.randn(self.num_basis_functions))
         self.gamma_basis = nn.Parameter(torch.randn(self.num_basis_functions))
         
@@ -58,4 +58,6 @@ class SubspaceEstimator(nn.Module):
         coefficients = self.coeff_net(f)
         omega = coefficients.view(batch_size, 2 * self.num_basis_functions, self.subspace_rank)
         B = torch.bmm(H, omega)
+        I_blk = torch.eye(2, self.subspace_rank, device=B.device) # 2×4
+        B[:, :2, :self.subspace_rank] = I_blk 
         return B

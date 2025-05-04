@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 class FeatureExtractor(nn.Module):
     def __init__(self):
@@ -30,4 +31,5 @@ class FeatureExtractor(nn.Module):
         x = x.squeeze(-1)
         
         x = self.linear_layers(x)
-        return x
+        x_norm =  F.normalize(x, p=2, dim=1)
+        return x_norm

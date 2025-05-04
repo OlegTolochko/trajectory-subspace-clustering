@@ -1,6 +1,6 @@
 import torch
 from models.trajectory_embedder import TrajectoryEmbeddingModel
-from training import Hopkins155
+from datasets import Hopkins155
 from torch.utils.data import DataLoader
 from sklearn.cluster import AgglomerativeClustering, KMeans, SpectralClustering
 from sklearn.metrics.cluster import contingency_matrix
@@ -39,39 +39,45 @@ def calculate_clustering_error(labels_true, labels_pred):
 
 def load_trajectory_data():
     dataset = Hopkins155()
-    loaded_data = DataLoader(dataset, batch_size=1)
+    loaded_data = torch.utils.data.DataLoader(
+        dataset,
+        batch_size=1,
+        shuffle=False,
+        num_workers=4,
+        pin_memory=True,
+    )
     return loaded_data
 
-def evaluate_model_performance(model, cluster_algo_name='hierarchical'):
-    data = load_trajectory_data()
+def evaluate_model_performance(model, data, cluster_algo_name='hierarchical'):
     individual_error_rates = []
-    target_device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    target_device = torch.device("cpu")
     model.to(target_device)
     with torch.no_grad():
         for sequence in data:
             seq_x = sequence['trajectories'].to(target_device).squeeze(0)
+            seq_t = sequence['times'].squeeze(0)
             seq_labels_gt = sequence['labels'].squeeze(0)
-            k = sequence['num_clusters'].item()
+            k_field = sequence['num_clusters']
+            k = k_field.item() if torch.is_tensor(k_field) else int(k_field)
             seq_name = sequence['name'][0]
             
-            seq_x_permuted = seq_x.permute(0, 2, 1)
-            f = model.feature_extractor(seq_x_permuted)
-            f = f.cpu().numpy()
-            
-            k = sequence['num_clusters'].item()
-            clusters = AgglomerativeClustering(n_clusters=k, linkage='ward', compute_distances=False)
-            
+            f, B = model(seq_x, seq_t)
+            B_flat = B.view(B.size(0), -1)
+            v = torch.cat((f, B_flat), dim=1)
+            v = torch.nn.functional.normalize(v, p=2, dim=1)
+            feats_np = v.cpu().numpy()
+                        
             predicted_labels = None
             if cluster_algo_name == 'hierarchical':
                 clusters = AgglomerativeClustering(n_clusters=k, linkage='ward', compute_distances=False)
-                predicted_labels = clusters.fit_predict(f)
+                predicted_labels = clusters.fit_predict(feats_np)
             elif cluster_algo_name == 'kmeans':
                 clusters = KMeans(n_clusters=k, random_state=0, n_init=10)
-                predicted_labels = clusters.fit_predict(f)
+                predicted_labels = clusters.fit_predict(feats_np)
             elif cluster_algo_name == 'spectral':
                 # tested options: 'rbf', 'nearest_neighbor'; possibly worth experminenting with different hyp. params here
                 clusters = SpectralClustering(n_clusters=k, random_state=0, affinity='rbf', n_neighbors=20)
-                predicted_labels = clusters.fit_predict(f)
+                predicted_labels = clusters.fit_predict(feats_np)
             else:
                 print(f"Error: Unknown clustering algorithm '{cluster_algo_name}'")
                 continue
@@ -87,14 +93,15 @@ def evaluate_model_performance(model, cluster_algo_name='hierarchical'):
 
     return mean_error_rate
 
-def compare_all_clustering_methods(model):
+def compare_all_clustering_methods(model, data):
     algorithms = ['hierarchical', 'kmeans', 'spectral']
     for algorithm in algorithms:
-        evaluate_model_performance(model,algorithm)
+        evaluate_model_performance(model, data, algorithm)
 
 def main():
     model = load_model()
-    error_rate = compare_all_clustering_methods(model)
+    data = load_trajectory_data()
+    error_rate = compare_all_clustering_methods(model, data)
 
 if __name__ == '__main__':
     main()
