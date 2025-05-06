@@ -4,6 +4,7 @@ from datasets import Hopkins155
 from torch.utils.data import DataLoader
 from sklearn.cluster import AgglomerativeClustering, KMeans, SpectralClustering
 from sklearn.metrics.cluster import contingency_matrix
+from sklearn.metrics import normalized_mutual_info_score, adjusted_mutual_info_score
 from scipy.optimize import linear_sum_assignment
 import numpy as np
 
@@ -51,6 +52,8 @@ def load_trajectory_data():
 def evaluate_model_performance(model, data, cluster_algo_name='hierarchical'):
     individual_error_rates = []
     target_device = torch.device("cpu")
+    nmi_scores = []
+    ari_scores = []
     model.to(target_device)
     with torch.no_grad():
         for sequence in data:
@@ -81,15 +84,24 @@ def evaluate_model_performance(model, data, cluster_algo_name='hierarchical'):
             else:
                 print(f"Error: Unknown clustering algorithm '{cluster_algo_name}'")
                 continue
-
+            
+            nmi = normalized_mutual_info_score(seq_labels_gt, predicted_labels)
+            ari = adjusted_mutual_info_score(seq_labels_gt, predicted_labels)
+            nmi_scores.append(nmi)
+            ari_scores.append(ari)
+            
             error_rate = calculate_clustering_error(seq_labels_gt.numpy(), predicted_labels)
             individual_error_rates.append(error_rate)
 
     mean_error_rate = sum(individual_error_rates) / len(individual_error_rates)
     median_error_rate = np.median(individual_error_rates)
+    mean_nmi = sum(nmi_scores) / len(nmi_scores)
+    mean_ari = sum(ari_scores) / len(ari_scores)
     print(f"Evaluation Complete with {cluster_algo_name} clustering:")
     print(f"Mean Clustering Error: {mean_error_rate * 100:.2f}%")
-    print(f"Median Clustering Error: {median_error_rate * 100:.2f}% \n")
+    print(f"Median Clustering Error: {median_error_rate * 100:.2f}%")
+    print(f"Mean NMI Score: {mean_nmi:.3f}")
+    print(f"Mean ARI Score: {mean_ari:.3f}\n")
 
     return mean_error_rate
 
