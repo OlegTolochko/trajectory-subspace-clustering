@@ -11,6 +11,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from inference import compare_all_clustering_methods
 from datasets import Hopkins155
+from tqdm import tqdm
 
 def reconstruct_x(x_original, B_estimated):
     try:
@@ -44,7 +45,7 @@ def train_model(train_set, batch_size=1, pretraining_epochs=20, full_epochs=50, 
                         persistent_workers=True if os.name == 'nt' else False)
     
     # pretraining:
-    for epoch in range(pretraining_epochs):
+    for epoch in tqdm(range(pretraining_epochs), desc="Pretraining Model"):
         epoch_loss_stage1 = 0.0
         num_seq_processed = 0
         full_model.feature_extractor.train()
@@ -73,7 +74,7 @@ def train_model(train_set, batch_size=1, pretraining_epochs=20, full_epochs=50, 
 
         
     # full model training:    
-    for epoch in range(full_epochs):
+    for epoch in tqdm(range(full_epochs), desc="Training Full Model"):
         full_model.train()
         epoch_loss_stage2 = 0.0
         num_seq_processed = 0
@@ -99,7 +100,7 @@ def train_model(train_set, batch_size=1, pretraining_epochs=20, full_epochs=50, 
             f_reconstructed = full_model.feature_extractor(x_recostructed_permuted)
             loss_featdiff = L_FeatDiff(f_original=f, f_reconstructed=f_reconstructed)
             
-            w_info = 0.1
+            w_info = 0.5
             w_res = 1.0
             w_feat = 1.0
 
