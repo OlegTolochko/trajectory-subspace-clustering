@@ -17,7 +17,7 @@ env
 source /home/wiss/xian/venvs/subspace_clustering_env/bin/activate
 export BLAS=/usr/lib/x86_64-linux-gnu/blas/libblas.so.3
 export LAPACK=/usr/lib/x86_64-linux-gnu/lapack/liblapack.a
-# export PATH="$PATH:/home/wiss/xian/Python_code/oleg/trajectory_embedding_learning/trajectory-subspace-clustering"
+export PYTHONPATH="$PYTHONPATH:/home/wiss/xian/Python_code/oleg/trajectory_embedding_learning/trajectory-subspace-clustering"
 # echo $PATH
 # pip install -U pip setuptools wheel
 # train
