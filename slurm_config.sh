@@ -19,4 +19,4 @@ export BLAS=/usr/lib/x86_64-linux-gnu/blas/libblas.so.3
 export LAPACK=/usr/lib/x86_64-linux-gnu/lapack/liblapack.a
 # pip install -U pip setuptools wheel
 # train
-python3 ./inference.py  >> output_inference.txt
+python3 ./playground/inference_save_feature_embeddings.py  >> output_inference.txt
