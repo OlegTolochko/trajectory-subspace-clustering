@@ -1,0 +1,15 @@
+Model weights loaded successfully.
+Loading Hopkins155 data from: data/Hopkins155/
+finished loading data for 157 sequences
+Evaluation Complete with hierarchical clustering:
+Mean Clustering Error: 1.27%
+Median Clustering Error: 0.00% 
+
+Evaluation Complete with kmeans clustering:
+Mean Clustering Error: 1.25%
+Median Clustering Error: 0.00% 
+
+Evaluation Complete with spectral clustering:
+Mean Clustering Error: 1.38%
+Median Clustering Error: 0.00% 
+

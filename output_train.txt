@@ -1,0 +1,818 @@
+Loading Hopkins155 data from: data/Hopkins155/
+finished loading data for 157 sequences
+cuda
+Pretraining Epoch 1/300, Avg Loss: 5.4111
+Pretraining Epoch 2/300, Avg Loss: 5.3526
+Pretraining Epoch 3/300, Avg Loss: 5.3295
+Pretraining Epoch 4/300, Avg Loss: 5.3316
+Pretraining Epoch 5/300, Avg Loss: 5.3272
+Pretraining Epoch 6/300, Avg Loss: 5.3145
+Pretraining Epoch 7/300, Avg Loss: 5.3083
+Pretraining Epoch 8/300, Avg Loss: 5.3075
+Pretraining Epoch 9/300, Avg Loss: 5.3034
+Pretraining Epoch 10/300, Avg Loss: 5.2979
+Pretraining Epoch 11/300, Avg Loss: 5.2942
+Pretraining Epoch 12/300, Avg Loss: 5.2910
+Pretraining Epoch 13/300, Avg Loss: 5.2835
+Pretraining Epoch 14/300, Avg Loss: 5.2839
+Pretraining Epoch 15/300, Avg Loss: 5.2830
+Pretraining Epoch 16/300, Avg Loss: 5.2808
+Pretraining Epoch 17/300, Avg Loss: 5.2779
+Pretraining Epoch 18/300, Avg Loss: 5.2708
+Pretraining Epoch 19/300, Avg Loss: 5.2779
+Pretraining Epoch 20/300, Avg Loss: 5.2689
+Pretraining Epoch 21/300, Avg Loss: 5.2692
+Pretraining Epoch 22/300, Avg Loss: 5.2698
+Pretraining Epoch 23/300, Avg Loss: 5.2660
+Pretraining Epoch 24/300, Avg Loss: 5.2667
+Pretraining Epoch 25/300, Avg Loss: 5.2669
+Pretraining Epoch 26/300, Avg Loss: 5.2591
+Pretraining Epoch 27/300, Avg Loss: 5.2666
+Pretraining Epoch 28/300, Avg Loss: 5.2639
+Pretraining Epoch 29/300, Avg Loss: 5.2637
+Pretraining Epoch 30/300, Avg Loss: 5.2640
+Pretraining Epoch 31/300, Avg Loss: 5.2582
+Pretraining Epoch 32/300, Avg Loss: 5.2569
+Pretraining Epoch 33/300, Avg Loss: 5.2565
+Pretraining Epoch 34/300, Avg Loss: 5.2596
+Pretraining Epoch 35/300, Avg Loss: 5.2541
+Pretraining Epoch 36/300, Avg Loss: 5.2513
+Pretraining Epoch 37/300, Avg Loss: 5.2534
+Pretraining Epoch 38/300, Avg Loss: 5.2540
+Pretraining Epoch 39/300, Avg Loss: 5.2514
+Pretraining Epoch 40/300, Avg Loss: 5.2485
+Pretraining Epoch 41/300, Avg Loss: 5.2470
+Pretraining Epoch 42/300, Avg Loss: 5.2460
+Pretraining Epoch 43/300, Avg Loss: 5.2472
+Pretraining Epoch 44/300, Avg Loss: 5.2478
+Pretraining Epoch 45/300, Avg Loss: 5.2423
+Pretraining Epoch 46/300, Avg Loss: 5.2455
+Pretraining Epoch 47/300, Avg Loss: 5.2420
+Pretraining Epoch 48/300, Avg Loss: 5.2448
+Pretraining Epoch 49/300, Avg Loss: 5.2399
+Pretraining Epoch 50/300, Avg Loss: 5.2379
+Pretraining Epoch 51/300, Avg Loss: 5.2407
+Pretraining Epoch 52/300, Avg Loss: 5.2403
+Pretraining Epoch 53/300, Avg Loss: 5.2378
+Pretraining Epoch 54/300, Avg Loss: 5.2383
+Pretraining Epoch 55/300, Avg Loss: 5.2352
+Pretraining Epoch 56/300, Avg Loss: 5.2364
+Pretraining Epoch 57/300, Avg Loss: 5.2352
+Pretraining Epoch 58/300, Avg Loss: 5.2326
+Pretraining Epoch 59/300, Avg Loss: 5.2298
+Pretraining Epoch 60/300, Avg Loss: 5.2316
+Pretraining Epoch 61/300, Avg Loss: 5.2332
+Pretraining Epoch 62/300, Avg Loss: 5.2289
+Pretraining Epoch 63/300, Avg Loss: 5.2287
+Pretraining Epoch 64/300, Avg Loss: 5.2253
+Pretraining Epoch 65/300, Avg Loss: 5.2212
+Pretraining Epoch 66/300, Avg Loss: 5.2310
+Pretraining Epoch 67/300, Avg Loss: 5.2259
+Pretraining Epoch 68/300, Avg Loss: 5.2239
+Pretraining Epoch 69/300, Avg Loss: 5.2224
+Pretraining Epoch 70/300, Avg Loss: 5.2221
+Pretraining Epoch 71/300, Avg Loss: 5.2187
+Pretraining Epoch 72/300, Avg Loss: 5.2184
+Pretraining Epoch 73/300, Avg Loss: 5.2161
+Pretraining Epoch 74/300, Avg Loss: 5.2184
+Pretraining Epoch 75/300, Avg Loss: 5.2198
+Pretraining Epoch 76/300, Avg Loss: 5.2217
+Pretraining Epoch 77/300, Avg Loss: 5.2159
+Pretraining Epoch 78/300, Avg Loss: 5.2132
+Pretraining Epoch 79/300, Avg Loss: 5.2124
+Pretraining Epoch 80/300, Avg Loss: 5.2126
+Pretraining Epoch 81/300, Avg Loss: 5.2119
+Pretraining Epoch 82/300, Avg Loss: 5.2089
+Pretraining Epoch 83/300, Avg Loss: 5.2074
+Pretraining Epoch 84/300, Avg Loss: 5.2064
+Pretraining Epoch 85/300, Avg Loss: 5.2043
+Pretraining Epoch 86/300, Avg Loss: 5.2082
+Pretraining Epoch 87/300, Avg Loss: 5.2068
+Pretraining Epoch 88/300, Avg Loss: 5.2025
+Pretraining Epoch 89/300, Avg Loss: 5.2001
+Pretraining Epoch 90/300, Avg Loss: 5.1986
+Pretraining Epoch 91/300, Avg Loss: 5.1982
+Pretraining Epoch 92/300, Avg Loss: 5.2052
+Pretraining Epoch 93/300, Avg Loss: 5.1993
+Pretraining Epoch 94/300, Avg Loss: 5.1941
+Pretraining Epoch 95/300, Avg Loss: 5.1948
+Pretraining Epoch 96/300, Avg Loss: 5.2015
+Pretraining Epoch 97/300, Avg Loss: 5.1906
+Pretraining Epoch 98/300, Avg Loss: 5.1945
+Pretraining Epoch 99/300, Avg Loss: 5.1944
+Pretraining Epoch 100/300, Avg Loss: 5.1959
+Pretraining Epoch 101/300, Avg Loss: 5.1872
+Pretraining Epoch 102/300, Avg Loss: 5.1878
+Pretraining Epoch 103/300, Avg Loss: 5.1870
+Pretraining Epoch 104/300, Avg Loss: 5.1940
+Pretraining Epoch 105/300, Avg Loss: 5.1859
+Pretraining Epoch 106/300, Avg Loss: 5.1883
+Pretraining Epoch 107/300, Avg Loss: 5.1838
+Pretraining Epoch 108/300, Avg Loss: 5.1851
+Pretraining Epoch 109/300, Avg Loss: 5.1848
+Pretraining Epoch 110/300, Avg Loss: 5.1836
+Pretraining Epoch 111/300, Avg Loss: 5.1856
+Pretraining Epoch 112/300, Avg Loss: 5.1803
+Pretraining Epoch 113/300, Avg Loss: 5.1857
+Pretraining Epoch 114/300, Avg Loss: 5.1794
+Pretraining Epoch 115/300, Avg Loss: 5.1795
+Pretraining Epoch 116/300, Avg Loss: 5.1751
+Pretraining Epoch 117/300, Avg Loss: 5.1782
+Pretraining Epoch 118/300, Avg Loss: 5.1771
+Pretraining Epoch 119/300, Avg Loss: 5.1752
+Pretraining Epoch 120/300, Avg Loss: 5.1752
+Pretraining Epoch 121/300, Avg Loss: 5.1811
+Pretraining Epoch 122/300, Avg Loss: 5.1771
+Pretraining Epoch 123/300, Avg Loss: 5.1721
+Pretraining Epoch 124/300, Avg Loss: 5.1773
+Pretraining Epoch 125/300, Avg Loss: 5.1728
+Pretraining Epoch 126/300, Avg Loss: 5.1706
+Pretraining Epoch 127/300, Avg Loss: 5.1699
+Pretraining Epoch 128/300, Avg Loss: 5.1718
+Pretraining Epoch 129/300, Avg Loss: 5.1758
+Pretraining Epoch 130/300, Avg Loss: 5.1711
+Pretraining Epoch 131/300, Avg Loss: 5.1706
+Pretraining Epoch 132/300, Avg Loss: 5.1729
+Pretraining Epoch 133/300, Avg Loss: 5.1679
+Pretraining Epoch 134/300, Avg Loss: 5.1659
+Pretraining Epoch 135/300, Avg Loss: 5.1680
+Pretraining Epoch 136/300, Avg Loss: 5.1650
+Pretraining Epoch 137/300, Avg Loss: 5.1658
+Pretraining Epoch 138/300, Avg Loss: 5.1667
+Pretraining Epoch 139/300, Avg Loss: 5.1650
+Pretraining Epoch 140/300, Avg Loss: 5.1637
+Pretraining Epoch 141/300, Avg Loss: 5.1614
+Pretraining Epoch 142/300, Avg Loss: 5.1595
+Pretraining Epoch 143/300, Avg Loss: 5.1625
+Pretraining Epoch 144/300, Avg Loss: 5.1597
+Pretraining Epoch 145/300, Avg Loss: 5.1577
+Pretraining Epoch 146/300, Avg Loss: 5.1584
+Pretraining Epoch 147/300, Avg Loss: 5.1629
+Pretraining Epoch 148/300, Avg Loss: 5.1584
+Pretraining Epoch 149/300, Avg Loss: 5.1580
+Pretraining Epoch 150/300, Avg Loss: 5.1576
+Pretraining Epoch 151/300, Avg Loss: 5.1615
+Pretraining Epoch 152/300, Avg Loss: 5.1533
+Pretraining Epoch 153/300, Avg Loss: 5.1523
+Pretraining Epoch 154/300, Avg Loss: 5.1512
+Pretraining Epoch 155/300, Avg Loss: 5.1499
+Pretraining Epoch 156/300, Avg Loss: 5.1534
+Pretraining Epoch 157/300, Avg Loss: 5.1519
+Pretraining Epoch 158/300, Avg Loss: 5.1500
+Pretraining Epoch 159/300, Avg Loss: 5.1518
+Pretraining Epoch 160/300, Avg Loss: 5.1504
+Pretraining Epoch 161/300, Avg Loss: 5.1505
+Pretraining Epoch 162/300, Avg Loss: 5.1491
+Pretraining Epoch 163/300, Avg Loss: 5.1455
+Pretraining Epoch 164/300, Avg Loss: 5.1459
+Pretraining Epoch 165/300, Avg Loss: 5.1504
+Pretraining Epoch 166/300, Avg Loss: 5.1453
+Pretraining Epoch 167/300, Avg Loss: 5.1479
+Pretraining Epoch 168/300, Avg Loss: 5.1502
+Pretraining Epoch 169/300, Avg Loss: 5.1480
+Pretraining Epoch 170/300, Avg Loss: 5.1418
+Pretraining Epoch 171/300, Avg Loss: 5.1461
+Pretraining Epoch 172/300, Avg Loss: 5.1452
+Pretraining Epoch 173/300, Avg Loss: 5.1457
+Pretraining Epoch 174/300, Avg Loss: 5.1396
+Pretraining Epoch 175/300, Avg Loss: 5.1449
+Pretraining Epoch 176/300, Avg Loss: 5.1392
+Pretraining Epoch 177/300, Avg Loss: 5.1416
+Pretraining Epoch 178/300, Avg Loss: 5.1381
+Pretraining Epoch 179/300, Avg Loss: 5.1391
+Pretraining Epoch 180/300, Avg Loss: 5.1386
+Pretraining Epoch 181/300, Avg Loss: 5.1411
+Pretraining Epoch 182/300, Avg Loss: 5.1377
+Pretraining Epoch 183/300, Avg Loss: 5.1376
+Pretraining Epoch 184/300, Avg Loss: 5.1379
+Pretraining Epoch 185/300, Avg Loss: 5.1418
+Pretraining Epoch 186/300, Avg Loss: 5.1369
+Pretraining Epoch 187/300, Avg Loss: 5.1336
+Pretraining Epoch 188/300, Avg Loss: 5.1336
+Pretraining Epoch 189/300, Avg Loss: 5.1357
+Pretraining Epoch 190/300, Avg Loss: 5.1333
+Pretraining Epoch 191/300, Avg Loss: 5.1323
+Pretraining Epoch 192/300, Avg Loss: 5.1341
+Pretraining Epoch 193/300, Avg Loss: 5.1335
+Pretraining Epoch 194/300, Avg Loss: 5.1360
+Pretraining Epoch 195/300, Avg Loss: 5.1296
+Pretraining Epoch 196/300, Avg Loss: 5.1299
+Pretraining Epoch 197/300, Avg Loss: 5.1339
+Pretraining Epoch 198/300, Avg Loss: 5.1303
+Pretraining Epoch 199/300, Avg Loss: 5.1315
+Pretraining Epoch 200/300, Avg Loss: 5.1354
+Pretraining Epoch 201/300, Avg Loss: 5.1368
+Pretraining Epoch 202/300, Avg Loss: 5.1296
+Pretraining Epoch 203/300, Avg Loss: 5.1266
+Pretraining Epoch 204/300, Avg Loss: 5.1286
+Pretraining Epoch 205/300, Avg Loss: 5.1259
+Pretraining Epoch 206/300, Avg Loss: 5.1264
+Pretraining Epoch 207/300, Avg Loss: 5.1294
+Pretraining Epoch 208/300, Avg Loss: 5.1278
+Pretraining Epoch 209/300, Avg Loss: 5.1237
+Pretraining Epoch 210/300, Avg Loss: 5.1203
+Pretraining Epoch 211/300, Avg Loss: 5.1287
+Pretraining Epoch 212/300, Avg Loss: 5.1248
+Pretraining Epoch 213/300, Avg Loss: 5.1259
+Pretraining Epoch 214/300, Avg Loss: 5.1249
+Pretraining Epoch 215/300, Avg Loss: 5.1273
+Pretraining Epoch 216/300, Avg Loss: 5.1210
+Pretraining Epoch 217/300, Avg Loss: 5.1238
+Pretraining Epoch 218/300, Avg Loss: 5.1208
+Pretraining Epoch 219/300, Avg Loss: 5.1189
+Pretraining Epoch 220/300, Avg Loss: 5.1229
+Pretraining Epoch 221/300, Avg Loss: 5.1147
+Pretraining Epoch 222/300, Avg Loss: 5.1187
+Pretraining Epoch 223/300, Avg Loss: 5.1189
+Pretraining Epoch 224/300, Avg Loss: 5.1225
+Pretraining Epoch 225/300, Avg Loss: 5.1174
+Pretraining Epoch 226/300, Avg Loss: 5.1176
+Pretraining Epoch 227/300, Avg Loss: 5.1216
+Pretraining Epoch 228/300, Avg Loss: 5.1157
+Pretraining Epoch 229/300, Avg Loss: 5.1167
+Pretraining Epoch 230/300, Avg Loss: 5.1184
+Pretraining Epoch 231/300, Avg Loss: 5.1152
+Pretraining Epoch 232/300, Avg Loss: 5.1113
+Pretraining Epoch 233/300, Avg Loss: 5.1110
+Pretraining Epoch 234/300, Avg Loss: 5.1090
+Pretraining Epoch 235/300, Avg Loss: 5.1139
+Pretraining Epoch 236/300, Avg Loss: 5.1132
+Pretraining Epoch 237/300, Avg Loss: 5.1096
+Pretraining Epoch 238/300, Avg Loss: 5.1191
+Pretraining Epoch 239/300, Avg Loss: 5.1114
+Pretraining Epoch 240/300, Avg Loss: 5.1082
+Pretraining Epoch 241/300, Avg Loss: 5.1254
+Pretraining Epoch 242/300, Avg Loss: 5.1135
+Pretraining Epoch 243/300, Avg Loss: 5.1093
+Pretraining Epoch 244/300, Avg Loss: 5.1096
+Pretraining Epoch 245/300, Avg Loss: 5.1094
+Pretraining Epoch 246/300, Avg Loss: 5.1077
+Pretraining Epoch 247/300, Avg Loss: 5.1128
+Pretraining Epoch 248/300, Avg Loss: 5.1087
+Pretraining Epoch 249/300, Avg Loss: 5.1042
+Pretraining Epoch 250/300, Avg Loss: 5.1102
+Pretraining Epoch 251/300, Avg Loss: 5.1065
+Pretraining Epoch 252/300, Avg Loss: 5.1070
+Pretraining Epoch 253/300, Avg Loss: 5.1145
+Pretraining Epoch 254/300, Avg Loss: 5.1096
+Pretraining Epoch 255/300, Avg Loss: 5.1045
+Pretraining Epoch 256/300, Avg Loss: 5.1080
+Pretraining Epoch 257/300, Avg Loss: 5.1035
+Pretraining Epoch 258/300, Avg Loss: 5.1098
+Pretraining Epoch 259/300, Avg Loss: 5.1069
+Pretraining Epoch 260/300, Avg Loss: 5.1091
+Pretraining Epoch 261/300, Avg Loss: 5.1026
+Pretraining Epoch 262/300, Avg Loss: 5.1013
+Pretraining Epoch 263/300, Avg Loss: 5.1018
+Pretraining Epoch 264/300, Avg Loss: 5.0987
+Pretraining Epoch 265/300, Avg Loss: 5.1016
+Pretraining Epoch 266/300, Avg Loss: 5.1005
+Pretraining Epoch 267/300, Avg Loss: 5.1027
+Pretraining Epoch 268/300, Avg Loss: 5.1004
+Pretraining Epoch 269/300, Avg Loss: 5.1039
+Pretraining Epoch 270/300, Avg Loss: 5.1022
+Pretraining Epoch 271/300, Avg Loss: 5.1002
+Pretraining Epoch 272/300, Avg Loss: 5.1018
+Pretraining Epoch 273/300, Avg Loss: 5.0980
+Pretraining Epoch 274/300, Avg Loss: 5.0983
+Pretraining Epoch 275/300, Avg Loss: 5.0963
+Pretraining Epoch 276/300, Avg Loss: 5.0976
+Pretraining Epoch 277/300, Avg Loss: 5.1044
+Pretraining Epoch 278/300, Avg Loss: 5.0987
+Pretraining Epoch 279/300, Avg Loss: 5.0994
+Pretraining Epoch 280/300, Avg Loss: 5.0992
+Pretraining Epoch 281/300, Avg Loss: 5.0928
+Pretraining Epoch 282/300, Avg Loss: 5.0972
+Pretraining Epoch 283/300, Avg Loss: 5.0949
+Pretraining Epoch 284/300, Avg Loss: 5.0972
+Pretraining Epoch 285/300, Avg Loss: 5.0929
+Pretraining Epoch 286/300, Avg Loss: 5.0945
+Pretraining Epoch 287/300, Avg Loss: 5.0942
+Pretraining Epoch 288/300, Avg Loss: 5.0944
+Pretraining Epoch 289/300, Avg Loss: 5.0941
+Pretraining Epoch 290/300, Avg Loss: 5.0960
+Pretraining Epoch 291/300, Avg Loss: 5.0979
+Pretraining Epoch 292/300, Avg Loss: 5.0922
+Pretraining Epoch 293/300, Avg Loss: 5.0898
+Pretraining Epoch 294/300, Avg Loss: 5.0879
+Pretraining Epoch 295/300, Avg Loss: 5.0961
+Pretraining Epoch 296/300, Avg Loss: 5.0915
+Pretraining Epoch 297/300, Avg Loss: 5.0970
+Pretraining Epoch 298/300, Avg Loss: 5.0927
+Pretraining Epoch 299/300, Avg Loss: 5.0879
+Pretraining Epoch 300/300, Avg Loss: 5.0920
+Full Training Epoch 1/500, Avg Loss: 0.5606
+Full Training Epoch 2/500, Avg Loss: 0.5436
+Full Training Epoch 3/500, Avg Loss: 0.5392
+Full Training Epoch 4/500, Avg Loss: 0.5359
+Full Training Epoch 5/500, Avg Loss: 0.5316
+Full Training Epoch 6/500, Avg Loss: 0.5283
+Full Training Epoch 7/500, Avg Loss: 0.5261
+Full Training Epoch 8/500, Avg Loss: 0.5250
+Full Training Epoch 9/500, Avg Loss: 0.5230
+Full Training Epoch 10/500, Avg Loss: 0.5217
+Full Training Epoch 11/500, Avg Loss: 0.5200
+Full Training Epoch 12/500, Avg Loss: 0.5210
+Full Training Epoch 13/500, Avg Loss: 0.5186
+Full Training Epoch 14/500, Avg Loss: 0.5193
+Full Training Epoch 15/500, Avg Loss: 0.5178
+Full Training Epoch 16/500, Avg Loss: 0.5176
+Full Training Epoch 17/500, Avg Loss: 0.5167
+Full Training Epoch 18/500, Avg Loss: 0.5148
+Full Training Epoch 19/500, Avg Loss: 0.5152
+Full Training Epoch 20/500, Avg Loss: 0.5125
+Full Training Epoch 21/500, Avg Loss: 0.5130
+Full Training Epoch 22/500, Avg Loss: 0.5128
+Full Training Epoch 23/500, Avg Loss: 0.5120
+Full Training Epoch 24/500, Avg Loss: 0.5114
+Full Training Epoch 25/500, Avg Loss: 0.5109
+Full Training Epoch 26/500, Avg Loss: 0.5109
+Full Training Epoch 27/500, Avg Loss: 0.5114
+Full Training Epoch 28/500, Avg Loss: 0.5099
+Full Training Epoch 29/500, Avg Loss: 0.5100
+Full Training Epoch 30/500, Avg Loss: 0.5102
+Full Training Epoch 31/500, Avg Loss: 0.5084
+Full Training Epoch 32/500, Avg Loss: 0.5092
+Full Training Epoch 33/500, Avg Loss: 0.5075
+Full Training Epoch 34/500, Avg Loss: 0.5076
+Full Training Epoch 35/500, Avg Loss: 0.5078
+Full Training Epoch 36/500, Avg Loss: 0.5083
+Full Training Epoch 37/500, Avg Loss: 0.5077
+Full Training Epoch 38/500, Avg Loss: 0.5076
+Full Training Epoch 39/500, Avg Loss: 0.5101
+Full Training Epoch 40/500, Avg Loss: 0.5066
+Full Training Epoch 41/500, Avg Loss: 0.5064
+Full Training Epoch 42/500, Avg Loss: 0.5073
+Full Training Epoch 43/500, Avg Loss: 0.5070
+Full Training Epoch 44/500, Avg Loss: 0.5072
+Full Training Epoch 45/500, Avg Loss: 0.5061
+Full Training Epoch 46/500, Avg Loss: 0.5094
+Full Training Epoch 47/500, Avg Loss: 0.5066
+Full Training Epoch 48/500, Avg Loss: 0.5071
+Full Training Epoch 49/500, Avg Loss: 0.5046
+Full Training Epoch 50/500, Avg Loss: 0.5053
+Full Training Epoch 51/500, Avg Loss: 0.5039
+Full Training Epoch 52/500, Avg Loss: 0.5070
+Full Training Epoch 53/500, Avg Loss: 0.5065
+Full Training Epoch 54/500, Avg Loss: 0.5050
+Full Training Epoch 55/500, Avg Loss: 0.5055
+Full Training Epoch 56/500, Avg Loss: 0.5039
+Full Training Epoch 57/500, Avg Loss: 0.5042
+Full Training Epoch 58/500, Avg Loss: 0.5041
+Full Training Epoch 59/500, Avg Loss: 0.5046
+Full Training Epoch 60/500, Avg Loss: 0.5043
+Full Training Epoch 61/500, Avg Loss: 0.5041
+Full Training Epoch 62/500, Avg Loss: 0.5042
+Full Training Epoch 63/500, Avg Loss: 0.5028
+Full Training Epoch 64/500, Avg Loss: 0.5043
+Full Training Epoch 65/500, Avg Loss: 0.5039
+Full Training Epoch 66/500, Avg Loss: 0.5037
+Full Training Epoch 67/500, Avg Loss: 0.5033
+Full Training Epoch 68/500, Avg Loss: 0.5026
+Full Training Epoch 69/500, Avg Loss: 0.5046
+Full Training Epoch 70/500, Avg Loss: 0.5021
+Full Training Epoch 71/500, Avg Loss: 0.5041
+Full Training Epoch 72/500, Avg Loss: 0.5023
+Full Training Epoch 73/500, Avg Loss: 0.5017
+Full Training Epoch 74/500, Avg Loss: 0.5017
+Full Training Epoch 75/500, Avg Loss: 0.5011
+Full Training Epoch 76/500, Avg Loss: 0.5018
+Full Training Epoch 77/500, Avg Loss: 0.5007
+Full Training Epoch 78/500, Avg Loss: 0.5013
+Full Training Epoch 79/500, Avg Loss: 0.5013
+Full Training Epoch 80/500, Avg Loss: 0.5049
+Full Training Epoch 81/500, Avg Loss: 0.5011
+Full Training Epoch 82/500, Avg Loss: 0.5032
+Full Training Epoch 83/500, Avg Loss: 0.5049
+Full Training Epoch 84/500, Avg Loss: 0.5015
+Full Training Epoch 85/500, Avg Loss: 0.5016
+Full Training Epoch 86/500, Avg Loss: 0.5006
+Full Training Epoch 87/500, Avg Loss: 0.5010
+Full Training Epoch 88/500, Avg Loss: 0.5005
+Full Training Epoch 89/500, Avg Loss: 0.4993
+Full Training Epoch 90/500, Avg Loss: 0.5005
+Full Training Epoch 91/500, Avg Loss: 0.5023
+Full Training Epoch 92/500, Avg Loss: 0.5017
+Full Training Epoch 93/500, Avg Loss: 0.5006
+Full Training Epoch 94/500, Avg Loss: 0.4992
+Full Training Epoch 95/500, Avg Loss: 0.4993
+Full Training Epoch 96/500, Avg Loss: 0.5003
+Full Training Epoch 97/500, Avg Loss: 0.4989
+Full Training Epoch 98/500, Avg Loss: 0.5001
+Full Training Epoch 99/500, Avg Loss: 0.5003
+Full Training Epoch 100/500, Avg Loss: 0.5011
+Full Training Epoch 101/500, Avg Loss: 0.4996
+Full Training Epoch 102/500, Avg Loss: 0.4990
+Full Training Epoch 103/500, Avg Loss: 0.5023
+Full Training Epoch 104/500, Avg Loss: 0.4991
+Full Training Epoch 105/500, Avg Loss: 0.4985
+Full Training Epoch 106/500, Avg Loss: 0.4977
+Full Training Epoch 107/500, Avg Loss: 0.4978
+Full Training Epoch 108/500, Avg Loss: 0.4977
+Full Training Epoch 109/500, Avg Loss: 0.4999
+Full Training Epoch 110/500, Avg Loss: 0.5011
+Full Training Epoch 111/500, Avg Loss: 0.5049
+Full Training Epoch 112/500, Avg Loss: 0.4992
+Full Training Epoch 113/500, Avg Loss: 0.4977
+Full Training Epoch 114/500, Avg Loss: 0.4993
+Full Training Epoch 115/500, Avg Loss: 0.5009
+Full Training Epoch 116/500, Avg Loss: 0.4986
+Full Training Epoch 117/500, Avg Loss: 0.4996
+Full Training Epoch 118/500, Avg Loss: 0.4994
+Full Training Epoch 119/500, Avg Loss: 0.4996
+Full Training Epoch 120/500, Avg Loss: 0.4970
+Full Training Epoch 121/500, Avg Loss: 0.4968
+Full Training Epoch 122/500, Avg Loss: 0.4986
+Full Training Epoch 123/500, Avg Loss: 0.4983
+Full Training Epoch 124/500, Avg Loss: 0.4992
+Full Training Epoch 125/500, Avg Loss: 0.4987
+Full Training Epoch 126/500, Avg Loss: 0.4968
+Full Training Epoch 127/500, Avg Loss: 0.4962
+Full Training Epoch 128/500, Avg Loss: 0.5017
+Full Training Epoch 129/500, Avg Loss: 0.5018
+Full Training Epoch 130/500, Avg Loss: 0.4981
+Full Training Epoch 131/500, Avg Loss: 0.4979
+Full Training Epoch 132/500, Avg Loss: 0.4988
+Full Training Epoch 133/500, Avg Loss: 0.5003
+Full Training Epoch 134/500, Avg Loss: 0.4977
+Full Training Epoch 135/500, Avg Loss: 0.4964
+Full Training Epoch 136/500, Avg Loss: 0.4971
+Full Training Epoch 137/500, Avg Loss: 0.4959
+Full Training Epoch 138/500, Avg Loss: 0.4993
+Full Training Epoch 139/500, Avg Loss: 0.4981
+Full Training Epoch 140/500, Avg Loss: 0.4987
+Full Training Epoch 141/500, Avg Loss: 0.4969
+Full Training Epoch 142/500, Avg Loss: 0.4958
+Full Training Epoch 143/500, Avg Loss: 0.4954
+Full Training Epoch 144/500, Avg Loss: 0.4955
+Full Training Epoch 145/500, Avg Loss: 0.5002
+Full Training Epoch 146/500, Avg Loss: 0.5017
+Full Training Epoch 147/500, Avg Loss: 0.4997
+Full Training Epoch 148/500, Avg Loss: 0.4993
+Full Training Epoch 149/500, Avg Loss: 0.4956
+Full Training Epoch 150/500, Avg Loss: 0.4951
+Full Training Epoch 151/500, Avg Loss: 0.4950
+Full Training Epoch 152/500, Avg Loss: 0.4957
+Full Training Epoch 153/500, Avg Loss: 0.4971
+Full Training Epoch 154/500, Avg Loss: 0.4963
+Full Training Epoch 155/500, Avg Loss: 0.4971
+Full Training Epoch 156/500, Avg Loss: 0.4962
+Full Training Epoch 157/500, Avg Loss: 0.4960
+Full Training Epoch 158/500, Avg Loss: 0.5009
+Full Training Epoch 159/500, Avg Loss: 0.4977
+Full Training Epoch 160/500, Avg Loss: 0.4960
+Full Training Epoch 161/500, Avg Loss: 0.4960
+Full Training Epoch 162/500, Avg Loss: 0.4977
+Full Training Epoch 163/500, Avg Loss: 0.4947
+Full Training Epoch 164/500, Avg Loss: 0.4958
+Full Training Epoch 165/500, Avg Loss: 0.4958
+Full Training Epoch 166/500, Avg Loss: 0.4973
+Full Training Epoch 167/500, Avg Loss: 0.4988
+Full Training Epoch 168/500, Avg Loss: 0.5016
+Full Training Epoch 169/500, Avg Loss: 0.4958
+Full Training Epoch 170/500, Avg Loss: 0.4961
+Full Training Epoch 171/500, Avg Loss: 0.4949
+Full Training Epoch 172/500, Avg Loss: 0.4947
+Full Training Epoch 173/500, Avg Loss: 0.4982
+Full Training Epoch 174/500, Avg Loss: 0.4975
+Full Training Epoch 175/500, Avg Loss: 0.4956
+Full Training Epoch 176/500, Avg Loss: 0.4946
+Full Training Epoch 177/500, Avg Loss: 0.4942
+Full Training Epoch 178/500, Avg Loss: 0.4969
+Full Training Epoch 179/500, Avg Loss: 0.4974
+Full Training Epoch 180/500, Avg Loss: 0.4951
+Full Training Epoch 181/500, Avg Loss: 0.4969
+Full Training Epoch 182/500, Avg Loss: 0.4964
+Full Training Epoch 183/500, Avg Loss: 0.4966
+Full Training Epoch 184/500, Avg Loss: 0.4954
+Full Training Epoch 185/500, Avg Loss: 0.4955
+Full Training Epoch 186/500, Avg Loss: 0.4945
+Full Training Epoch 187/500, Avg Loss: 0.4957
+Full Training Epoch 188/500, Avg Loss: 0.4949
+Full Training Epoch 189/500, Avg Loss: 0.4947
+Full Training Epoch 190/500, Avg Loss: 0.4963
+Full Training Epoch 191/500, Avg Loss: 0.4975
+Full Training Epoch 192/500, Avg Loss: 0.4990
+Full Training Epoch 193/500, Avg Loss: 0.4963
+Full Training Epoch 194/500, Avg Loss: 0.4949
+Full Training Epoch 195/500, Avg Loss: 0.4957
+Full Training Epoch 196/500, Avg Loss: 0.5006
+Full Training Epoch 197/500, Avg Loss: 0.4977
+Full Training Epoch 198/500, Avg Loss: 0.4987
+Full Training Epoch 199/500, Avg Loss: 0.4960
+Full Training Epoch 200/500, Avg Loss: 0.4943
+Full Training Epoch 201/500, Avg Loss: 0.4941
+Full Training Epoch 202/500, Avg Loss: 0.4935
+Full Training Epoch 203/500, Avg Loss: 0.4935
+Full Training Epoch 204/500, Avg Loss: 0.4933
+Full Training Epoch 205/500, Avg Loss: 0.4940
+Full Training Epoch 206/500, Avg Loss: 0.4940
+Full Training Epoch 207/500, Avg Loss: 0.4962
+Full Training Epoch 208/500, Avg Loss: 0.4951
+Full Training Epoch 209/500, Avg Loss: 0.4950
+Full Training Epoch 210/500, Avg Loss: 0.4939
+Full Training Epoch 211/500, Avg Loss: 0.4939
+Full Training Epoch 212/500, Avg Loss: 0.4964
+Full Training Epoch 213/500, Avg Loss: 0.4970
+Full Training Epoch 214/500, Avg Loss: 0.4952
+Full Training Epoch 215/500, Avg Loss: 0.4943
+Full Training Epoch 216/500, Avg Loss: 0.4940
+Full Training Epoch 217/500, Avg Loss: 0.4949
+Full Training Epoch 218/500, Avg Loss: 0.4964
+Full Training Epoch 219/500, Avg Loss: 0.4952
+Full Training Epoch 220/500, Avg Loss: 0.4949
+Full Training Epoch 221/500, Avg Loss: 0.4936
+Full Training Epoch 222/500, Avg Loss: 0.4932
+Full Training Epoch 223/500, Avg Loss: 0.4927
+Full Training Epoch 224/500, Avg Loss: 0.4969
+Full Training Epoch 225/500, Avg Loss: 0.5002
+Full Training Epoch 226/500, Avg Loss: 0.4963
+Full Training Epoch 227/500, Avg Loss: 0.4941
+Full Training Epoch 228/500, Avg Loss: 0.4950
+Full Training Epoch 229/500, Avg Loss: 0.4948
+Full Training Epoch 230/500, Avg Loss: 0.4934
+Full Training Epoch 231/500, Avg Loss: 0.4935
+Full Training Epoch 232/500, Avg Loss: 0.4952
+Full Training Epoch 233/500, Avg Loss: 0.4947
+Full Training Epoch 234/500, Avg Loss: 0.4935
+Full Training Epoch 235/500, Avg Loss: 0.4940
+Full Training Epoch 236/500, Avg Loss: 0.4931
+Full Training Epoch 237/500, Avg Loss: 0.4939
+Full Training Epoch 238/500, Avg Loss: 0.4935
+Full Training Epoch 239/500, Avg Loss: 0.4963
+Full Training Epoch 240/500, Avg Loss: 0.4947
+Full Training Epoch 241/500, Avg Loss: 0.4936
+Full Training Epoch 242/500, Avg Loss: 0.4936
+Full Training Epoch 243/500, Avg Loss: 0.4943
+Full Training Epoch 244/500, Avg Loss: 0.4943
+Full Training Epoch 245/500, Avg Loss: 0.4930
+Full Training Epoch 246/500, Avg Loss: 0.4927
+Full Training Epoch 247/500, Avg Loss: 0.4951
+Full Training Epoch 248/500, Avg Loss: 0.4957
+Full Training Epoch 249/500, Avg Loss: 0.5016
+Full Training Epoch 250/500, Avg Loss: 0.4988
+Full Training Epoch 251/500, Avg Loss: 0.4936
+Full Training Epoch 252/500, Avg Loss: 0.4922
+Full Training Epoch 253/500, Avg Loss: 0.4926
+Full Training Epoch 254/500, Avg Loss: 0.4927
+Full Training Epoch 255/500, Avg Loss: 0.4923
+Full Training Epoch 256/500, Avg Loss: 0.4944
+Full Training Epoch 257/500, Avg Loss: 0.4936
+Full Training Epoch 258/500, Avg Loss: 0.4941
+Full Training Epoch 259/500, Avg Loss: 0.4936
+Full Training Epoch 260/500, Avg Loss: 0.4958
+Full Training Epoch 261/500, Avg Loss: 0.4948
+Full Training Epoch 262/500, Avg Loss: 0.4930
+Full Training Epoch 263/500, Avg Loss: 0.4924
+Full Training Epoch 264/500, Avg Loss: 0.4926
+Full Training Epoch 265/500, Avg Loss: 0.4929
+Full Training Epoch 266/500, Avg Loss: 0.4934
+Full Training Epoch 267/500, Avg Loss: 0.4943
+Full Training Epoch 268/500, Avg Loss: 0.4947
+Full Training Epoch 269/500, Avg Loss: 0.4948
+Full Training Epoch 270/500, Avg Loss: 0.5004
+Full Training Epoch 271/500, Avg Loss: 0.4941
+Full Training Epoch 272/500, Avg Loss: 0.4931
+Full Training Epoch 273/500, Avg Loss: 0.4925
+Full Training Epoch 274/500, Avg Loss: 0.4924
+Full Training Epoch 275/500, Avg Loss: 0.4943
+Full Training Epoch 276/500, Avg Loss: 0.4968
+Full Training Epoch 277/500, Avg Loss: 0.4949
+Full Training Epoch 278/500, Avg Loss: 0.4955
+Full Training Epoch 279/500, Avg Loss: 0.4946
+Full Training Epoch 280/500, Avg Loss: 0.4931
+Full Training Epoch 281/500, Avg Loss: 0.4923
+Full Training Epoch 282/500, Avg Loss: 0.4923
+Full Training Epoch 283/500, Avg Loss: 0.4927
+Full Training Epoch 284/500, Avg Loss: 0.4938
+Full Training Epoch 285/500, Avg Loss: 0.4932
+Full Training Epoch 286/500, Avg Loss: 0.4926
+Full Training Epoch 287/500, Avg Loss: 0.4924
+Full Training Epoch 288/500, Avg Loss: 0.4929
+Full Training Epoch 289/500, Avg Loss: 0.4970
+Full Training Epoch 290/500, Avg Loss: 0.5016
+Full Training Epoch 291/500, Avg Loss: 0.4930
+Full Training Epoch 292/500, Avg Loss: 0.4922
+Full Training Epoch 293/500, Avg Loss: 0.4921
+Full Training Epoch 294/500, Avg Loss: 0.4923
+Full Training Epoch 295/500, Avg Loss: 0.4919
+Full Training Epoch 296/500, Avg Loss: 0.4919
+Full Training Epoch 297/500, Avg Loss: 0.4920
+Full Training Epoch 298/500, Avg Loss: 0.4941
+Full Training Epoch 299/500, Avg Loss: 0.4975
+Full Training Epoch 300/500, Avg Loss: 0.4943
+Full Training Epoch 301/500, Avg Loss: 0.4938
+Full Training Epoch 302/500, Avg Loss: 0.4924
+Full Training Epoch 303/500, Avg Loss: 0.4918
+Full Training Epoch 304/500, Avg Loss: 0.4931
+Full Training Epoch 305/500, Avg Loss: 0.4949
+Full Training Epoch 306/500, Avg Loss: 0.4945
+Full Training Epoch 307/500, Avg Loss: 0.4935
+Full Training Epoch 308/500, Avg Loss: 0.4921
+Full Training Epoch 309/500, Avg Loss: 0.4915
+Full Training Epoch 310/500, Avg Loss: 0.4916
+Full Training Epoch 311/500, Avg Loss: 0.4933
+Full Training Epoch 312/500, Avg Loss: 0.4960
+Full Training Epoch 313/500, Avg Loss: 0.4944
+Full Training Epoch 314/500, Avg Loss: 0.4969
+Full Training Epoch 315/500, Avg Loss: 0.4940
+Full Training Epoch 316/500, Avg Loss: 0.4922
+Full Training Epoch 317/500, Avg Loss: 0.4918
+Full Training Epoch 318/500, Avg Loss: 0.4919
+Full Training Epoch 319/500, Avg Loss: 0.4920
+Full Training Epoch 320/500, Avg Loss: 0.4915
+Full Training Epoch 321/500, Avg Loss: 0.4919
+Full Training Epoch 322/500, Avg Loss: 0.5008
+Full Training Epoch 323/500, Avg Loss: 0.4964
+Full Training Epoch 324/500, Avg Loss: 0.4936
+Full Training Epoch 325/500, Avg Loss: 0.4918
+Full Training Epoch 326/500, Avg Loss: 0.4919
+Full Training Epoch 327/500, Avg Loss: 0.4915
+Full Training Epoch 328/500, Avg Loss: 0.4913
+Full Training Epoch 329/500, Avg Loss: 0.4913
+Full Training Epoch 330/500, Avg Loss: 0.4929
+Full Training Epoch 331/500, Avg Loss: 0.4936
+Full Training Epoch 332/500, Avg Loss: 0.4934
+Full Training Epoch 333/500, Avg Loss: 0.4963
+Full Training Epoch 334/500, Avg Loss: 0.4991
+Full Training Epoch 335/500, Avg Loss: 0.4954
+Full Training Epoch 336/500, Avg Loss: 0.4920
+Full Training Epoch 337/500, Avg Loss: 0.4915
+Full Training Epoch 338/500, Avg Loss: 0.4931
+Full Training Epoch 339/500, Avg Loss: 0.4919
+Full Training Epoch 340/500, Avg Loss: 0.4925
+Full Training Epoch 341/500, Avg Loss: 0.4913
+Full Training Epoch 342/500, Avg Loss: 0.4915
+Full Training Epoch 343/500, Avg Loss: 0.4928
+Full Training Epoch 344/500, Avg Loss: 0.4932
+Full Training Epoch 345/500, Avg Loss: 0.4937
+Full Training Epoch 346/500, Avg Loss: 0.4992
+Full Training Epoch 347/500, Avg Loss: 0.4940
+Full Training Epoch 348/500, Avg Loss: 0.4920
+Full Training Epoch 349/500, Avg Loss: 0.4914
+Full Training Epoch 350/500, Avg Loss: 0.4915
+Full Training Epoch 351/500, Avg Loss: 0.4924
+Full Training Epoch 352/500, Avg Loss: 0.4921
+Full Training Epoch 353/500, Avg Loss: 0.4919
+Full Training Epoch 354/500, Avg Loss: 0.4940
+Full Training Epoch 355/500, Avg Loss: 0.4955
+Full Training Epoch 356/500, Avg Loss: 0.4933
+Full Training Epoch 357/500, Avg Loss: 0.4925
+Full Training Epoch 358/500, Avg Loss: 0.4926
+Full Training Epoch 359/500, Avg Loss: 0.4916
+Full Training Epoch 360/500, Avg Loss: 0.4918
+Full Training Epoch 361/500, Avg Loss: 0.4919
+Full Training Epoch 362/500, Avg Loss: 0.4922
+Full Training Epoch 363/500, Avg Loss: 0.4938
+Full Training Epoch 364/500, Avg Loss: 0.4957
+Full Training Epoch 365/500, Avg Loss: 0.4936
+Full Training Epoch 366/500, Avg Loss: 0.4928
+Full Training Epoch 367/500, Avg Loss: 0.4915
+Full Training Epoch 368/500, Avg Loss: 0.4912
+Full Training Epoch 369/500, Avg Loss: 0.4916
+Full Training Epoch 370/500, Avg Loss: 0.4914
+Full Training Epoch 371/500, Avg Loss: 0.4913
+Full Training Epoch 372/500, Avg Loss: 0.4911
+Full Training Epoch 373/500, Avg Loss: 0.4931
+Full Training Epoch 374/500, Avg Loss: 0.4930
+Full Training Epoch 375/500, Avg Loss: 0.4964
+Full Training Epoch 376/500, Avg Loss: 0.4966
+Full Training Epoch 377/500, Avg Loss: 0.4923
+Full Training Epoch 378/500, Avg Loss: 0.4913
+Full Training Epoch 379/500, Avg Loss: 0.4914
+Full Training Epoch 380/500, Avg Loss: 0.4917
+Full Training Epoch 381/500, Avg Loss: 0.4923
+Full Training Epoch 382/500, Avg Loss: 0.4918
+Full Training Epoch 383/500, Avg Loss: 0.4917
+Full Training Epoch 384/500, Avg Loss: 0.4928
+Full Training Epoch 385/500, Avg Loss: 0.4924
+Full Training Epoch 386/500, Avg Loss: 0.4922
+Full Training Epoch 387/500, Avg Loss: 0.4932
+Full Training Epoch 388/500, Avg Loss: 0.4971
+Full Training Epoch 389/500, Avg Loss: 0.4931
+Full Training Epoch 390/500, Avg Loss: 0.4914
+Full Training Epoch 391/500, Avg Loss: 0.4910
+Full Training Epoch 392/500, Avg Loss: 0.4914
+Full Training Epoch 393/500, Avg Loss: 0.4909
+Full Training Epoch 394/500, Avg Loss: 0.4916
+Full Training Epoch 395/500, Avg Loss: 0.4945
+Full Training Epoch 396/500, Avg Loss: 0.4967
+Full Training Epoch 397/500, Avg Loss: 0.4995
+Full Training Epoch 398/500, Avg Loss: 0.4924
+Full Training Epoch 399/500, Avg Loss: 0.4932
+Full Training Epoch 400/500, Avg Loss: 0.4921
+Full Training Epoch 401/500, Avg Loss: 0.4918
+Full Training Epoch 402/500, Avg Loss: 0.4911
+Full Training Epoch 403/500, Avg Loss: 0.4910
+Full Training Epoch 404/500, Avg Loss: 0.4909
+Full Training Epoch 405/500, Avg Loss: 0.4912
+Full Training Epoch 406/500, Avg Loss: 0.4906
+Full Training Epoch 407/500, Avg Loss: 0.4914
+Full Training Epoch 408/500, Avg Loss: 0.4942
+Full Training Epoch 409/500, Avg Loss: 0.4949
+Full Training Epoch 410/500, Avg Loss: 0.4936
+Full Training Epoch 411/500, Avg Loss: 0.4918
+Full Training Epoch 412/500, Avg Loss: 0.4911
+Full Training Epoch 413/500, Avg Loss: 0.4906
+Full Training Epoch 414/500, Avg Loss: 0.4920
+Full Training Epoch 415/500, Avg Loss: 0.4994
+Full Training Epoch 416/500, Avg Loss: 0.4952
+Full Training Epoch 417/500, Avg Loss: 0.4918
+Full Training Epoch 418/500, Avg Loss: 0.4908
+Full Training Epoch 419/500, Avg Loss: 0.4907
+Full Training Epoch 420/500, Avg Loss: 0.4906
+Full Training Epoch 421/500, Avg Loss: 0.4914
+Full Training Epoch 422/500, Avg Loss: 0.4914
+Full Training Epoch 423/500, Avg Loss: 0.4912
+Full Training Epoch 424/500, Avg Loss: 0.4924
+Full Training Epoch 425/500, Avg Loss: 0.4925
+Full Training Epoch 426/500, Avg Loss: 0.4931
+Full Training Epoch 427/500, Avg Loss: 0.4928
+Full Training Epoch 428/500, Avg Loss: 0.4916
+Full Training Epoch 429/500, Avg Loss: 0.4924
+Full Training Epoch 430/500, Avg Loss: 0.4918
+Full Training Epoch 431/500, Avg Loss: 0.4913
+Full Training Epoch 432/500, Avg Loss: 0.4917
+Full Training Epoch 433/500, Avg Loss: 0.4916
+Full Training Epoch 434/500, Avg Loss: 0.4926
+Full Training Epoch 435/500, Avg Loss: 0.4932
+Full Training Epoch 436/500, Avg Loss: 0.4912
+Full Training Epoch 437/500, Avg Loss: 0.4916
+Full Training Epoch 438/500, Avg Loss: 0.4942
+Full Training Epoch 439/500, Avg Loss: 0.4922
+Full Training Epoch 440/500, Avg Loss: 0.4915
+Full Training Epoch 441/500, Avg Loss: 0.4908
+Full Training Epoch 442/500, Avg Loss: 0.4905
+Full Training Epoch 443/500, Avg Loss: 0.4904
+Full Training Epoch 444/500, Avg Loss: 0.4912
+Full Training Epoch 445/500, Avg Loss: 0.4974
+Full Training Epoch 446/500, Avg Loss: 0.4984
+Full Training Epoch 447/500, Avg Loss: 0.4931
+Full Training Epoch 448/500, Avg Loss: 0.4917
+Full Training Epoch 449/500, Avg Loss: 0.4909
+Full Training Epoch 450/500, Avg Loss: 0.4906
+Full Training Epoch 451/500, Avg Loss: 0.4906
+Full Training Epoch 452/500, Avg Loss: 0.4908
+Full Training Epoch 453/500, Avg Loss: 0.4924
+Full Training Epoch 454/500, Avg Loss: 0.4913
+Full Training Epoch 455/500, Avg Loss: 0.4910
+Full Training Epoch 456/500, Avg Loss: 0.4905
+Full Training Epoch 457/500, Avg Loss: 0.4910
+Full Training Epoch 458/500, Avg Loss: 0.4964
+Full Training Epoch 459/500, Avg Loss: 0.4924
+Full Training Epoch 460/500, Avg Loss: 0.4914
+Full Training Epoch 461/500, Avg Loss: 0.4912
+Full Training Epoch 462/500, Avg Loss: 0.4913
+Full Training Epoch 463/500, Avg Loss: 0.4910
+Full Training Epoch 464/500, Avg Loss: 0.4905
+Full Training Epoch 465/500, Avg Loss: 0.4910
+Full Training Epoch 466/500, Avg Loss: 0.4939
+Full Training Epoch 467/500, Avg Loss: 0.4973
+Full Training Epoch 468/500, Avg Loss: 0.4939
+Full Training Epoch 469/500, Avg Loss: 0.4909
+Full Training Epoch 470/500, Avg Loss: 0.4904
+Full Training Epoch 471/500, Avg Loss: 0.4907
+Full Training Epoch 472/500, Avg Loss: 0.4903
+Full Training Epoch 473/500, Avg Loss: 0.4903
+Full Training Epoch 474/500, Avg Loss: 0.4918
+Full Training Epoch 475/500, Avg Loss: 0.4932
+Full Training Epoch 476/500, Avg Loss: 0.4919
+Full Training Epoch 477/500, Avg Loss: 0.4921
+Full Training Epoch 478/500, Avg Loss: 0.4908
+Full Training Epoch 479/500, Avg Loss: 0.4905
+Full Training Epoch 480/500, Avg Loss: 0.4905
+Full Training Epoch 481/500, Avg Loss: 0.4913
+Full Training Epoch 482/500, Avg Loss: 0.4961
+Full Training Epoch 483/500, Avg Loss: 0.4948
+Full Training Epoch 484/500, Avg Loss: 0.4923
+Full Training Epoch 485/500, Avg Loss: 0.4913
+Full Training Epoch 486/500, Avg Loss: 0.4908
+Full Training Epoch 487/500, Avg Loss: 0.4916
+Full Training Epoch 488/500, Avg Loss: 0.4923
+Full Training Epoch 489/500, Avg Loss: 0.4908
+Full Training Epoch 490/500, Avg Loss: 0.4909
+Full Training Epoch 491/500, Avg Loss: 0.4916
+Full Training Epoch 492/500, Avg Loss: 0.4908
+Full Training Epoch 493/500, Avg Loss: 0.4910
+Full Training Epoch 494/500, Avg Loss: 0.4911
+Full Training Epoch 495/500, Avg Loss: 0.4914
+Full Training Epoch 496/500, Avg Loss: 0.4926
+Full Training Epoch 497/500, Avg Loss: 0.4924
+Full Training Epoch 498/500, Avg Loss: 0.4927
+Full Training Epoch 499/500, Avg Loss: 0.4943
+Full Training Epoch 500/500, Avg Loss: 0.4937
+Model training complete.
+Evaluation Complete with hierarchical clustering:
+Mean Clustering Error: 5.68%
+Median Clustering Error: 0.00% 
+
+Evaluation Complete with kmeans clustering:
+Mean Clustering Error: 5.24%
+Median Clustering Error: 0.26% 
+
+Evaluation Complete with spectral clustering:
+Mean Clustering Error: 5.91%
+Median Clustering Error: 0.00% 
+
+Saving model state_dict to out/models/trained_model_weights_normalized.pt...
+Saved.
