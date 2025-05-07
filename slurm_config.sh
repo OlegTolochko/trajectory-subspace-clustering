@@ -19,4 +19,4 @@ export BLAS=/usr/lib/x86_64-linux-gnu/blas/libblas.so.3
 export LAPACK=/usr/lib/x86_64-linux-gnu/lapack/liblapack.a
 # pip install -U pip setuptools wheel
 # train
-python3 ./training.py  >> output_train.txt
+python3 ./inference.py  >> output_inference.txt
