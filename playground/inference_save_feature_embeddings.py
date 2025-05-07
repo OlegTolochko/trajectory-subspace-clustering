@@ -1,6 +1,6 @@
 import torch
 import sys
-sys.path.append("/home/wiss/xian/Python_code/oleg/trajectory_embedding_learning/trajectory-subspace-clustering")
+# sys.path.append("/home/wiss/xian/Python_code/oleg/trajectory_embedding_learning/trajectory-subspace-clustering")
 from models.trajectory_embedder import TrajectoryEmbeddingModel
 from datasets import Hopkins155
 from torch.utils.data import DataLoader
