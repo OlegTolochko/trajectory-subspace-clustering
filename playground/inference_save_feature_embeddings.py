@@ -1,4 +1,6 @@
 import torch
+import sys
+sys.path.append("/home/wiss/xian/Python_code/oleg/trajectory_embedding_learning/trajectory-subspace-clustering")
 from models.trajectory_embedder import TrajectoryEmbeddingModel
 from datasets import Hopkins155
 from torch.utils.data import DataLoader
@@ -8,7 +10,7 @@ from scipy.optimize import linear_sum_assignment
 import numpy as np
 import os
 
-feature_save_path = "./out/results"
+feature_save_path = "../out/results"
 def load_model():
     model = TrajectoryEmbeddingModel()
     load_path = '../out/models/trained_model_weights_normalized.pt'
