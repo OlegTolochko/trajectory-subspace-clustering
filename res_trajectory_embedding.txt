@@ -1,6 +1,6 @@
 worker-minor-4
 /usr/bin/python3
-Wed May  7 17:11:15 2025       
+Wed May  7 17:15:55 2025       
 +---------------------------------------------------------------------------------------+
 | NVIDIA-SMI 535.216.01             Driver Version: 535.216.01   CUDA Version: 12.2     |
 |-----------------------------------------+----------------------+----------------------+
@@ -25,17 +25,17 @@ SLURM_JOB_USER=xian
 SLURM_TASKS_PER_NODE=1
 SLURM_JOB_UID=33124
 TERM_PROGRAM_VERSION=3.4
-SLURM_TASK_PID=4562
+SLURM_TASK_PID=4902
 TMUX=/tmp/tmux-33124/default,135456,4
 SLURM_JOB_GPUS=0
 SLURM_LOCALID=0
 SLURM_SUBMIT_DIR=/home/wiss/xian/Python_code/oleg/trajectory_embedding_learning/trajectory-subspace-clustering
 HOSTNAME=worker-minor-4
 SLURMD_NODENAME=worker-minor-4
-SLURM_JOB_START_TIME=1746630674
+SLURM_JOB_START_TIME=1746630954
 HYDRA_LAUNCHER_EXTRA_ARGS=--external-launcher
 SLURM_CLUSTER_NAME=cluster
-SLURM_JOB_END_TIME=1747145474
+SLURM_JOB_END_TIME=1747145754
 SLURM_CPUS_ON_NODE=2
 SLURM_JOB_CPUS_PER_NODE=2
 SLURM_GPUS_ON_NODE=1
@@ -46,7 +46,7 @@ LOGNAME=xian
 XDG_SESSION_TYPE=tty
 SLURM_JOB_PARTITION=all
 SLURM_JOB_NUM_NODES=1
-SLURM_JOBID=60349
+SLURM_JOBID=60350
 SLURM_JOB_QOS=normal
 I_MPI_HYDRA_BOOTSTRAP_EXEC_EXTRA_ARGS=--external-launcher
 HOME=/home/wiss/xian
@@ -73,7 +73,7 @@ SLURM_NNODES=1
 XDG_SESSION_ID=174
 SLURM_SUBMIT_HOST=madeira.dbs.ifi.lmu.de
 XDG_RUNTIME_DIR=/run/user/33124
-SLURM_JOB_ID=60349
+SLURM_JOB_ID=60350
 SLURM_NODEID=0
 SSH_CLIENT=141.84.18.4 56250 22
 XDG_DATA_DIRS=/usr/local/share:/usr/share:/var/lib/snapd/desktop
@@ -91,17 +91,9 @@ I_MPI_HYDRA_BOOTSTRAP=slurm
 _=/usr/bin/env
 /home/wiss/xian/Python_code/oleg/trajectory_embedding_learning/trajectory-subspace-clustering/./playground/inference_save_feature_embeddings.py:19: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
   state_dict = torch.load(load_path, map_location=target_device)
-Traceback (most recent call last):
-  File "/home/wiss/xian/Python_code/oleg/trajectory_embedding_learning/trajectory-subspace-clustering/./playground/inference_save_feature_embeddings.py", line 132, in <module>
-    main()
-  File "/home/wiss/xian/Python_code/oleg/trajectory_embedding_learning/trajectory-subspace-clustering/./playground/inference_save_feature_embeddings.py", line 126, in main
-    model = load_model()
-  File "/home/wiss/xian/Python_code/oleg/trajectory_embedding_learning/trajectory-subspace-clustering/./playground/inference_save_feature_embeddings.py", line 19, in load_model
-    state_dict = torch.load(load_path, map_location=target_device)
-  File "/home/wiss/xian/venvs/subspace_clustering_env/lib/python3.9/site-packages/torch/serialization.py", line 1319, in load
-    with _open_file_like(f, "rb") as opened_file:
-  File "/home/wiss/xian/venvs/subspace_clustering_env/lib/python3.9/site-packages/torch/serialization.py", line 659, in _open_file_like
-    return _open_file(name_or_buffer, mode)
-  File "/home/wiss/xian/venvs/subspace_clustering_env/lib/python3.9/site-packages/torch/serialization.py", line 640, in __init__
-    super().__init__(open(name, mode))
-FileNotFoundError: [Errno 2] No such file or directory: '../out/models/trained_model_weights_normalized.pt'
+/home/wiss/xian/venvs/subspace_clustering_env/lib/python3.9/site-packages/torch/utils/data/dataloader.py:617: UserWarning: This DataLoader will create 4 worker processes in total. Our suggested max number of worker in current system is 2, which is smaller than what this DataLoader is going to create. Please be aware that excessive worker creation might get DataLoader running slow or even freeze, lower the worker number to avoid potential slowness/freeze if necessary.
+  warnings.warn(
+/home/wiss/xian/venvs/subspace_clustering_env/lib/python3.9/site-packages/torch/utils/data/dataloader.py:617: UserWarning: This DataLoader will create 4 worker processes in total. Our suggested max number of worker in current system is 2, which is smaller than what this DataLoader is going to create. Please be aware that excessive worker creation might get DataLoader running slow or even freeze, lower the worker number to avoid potential slowness/freeze if necessary.
+  warnings.warn(
+/home/wiss/xian/venvs/subspace_clustering_env/lib/python3.9/site-packages/torch/utils/data/dataloader.py:617: UserWarning: This DataLoader will create 4 worker processes in total. Our suggested max number of worker in current system is 2, which is smaller than what this DataLoader is going to create. Please be aware that excessive worker creation might get DataLoader running slow or even freeze, lower the worker number to avoid potential slowness/freeze if necessary.
+  warnings.warn(

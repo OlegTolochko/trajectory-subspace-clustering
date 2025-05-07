@@ -13,3 +13,43 @@ Evaluation Complete with spectral clustering:
 Mean Clustering Error: 1.38%
 Median Clustering Error: 0.00% 
 
+Model weights loaded successfully.
+Loading Hopkins155 data from: ./data/Hopkins155/
+finished loading data for 157 sequences
+Evaluation Complete with hierarchical clustering:
+Mean Clustering Error: 1.27%
+Median Clustering Error: 0.00% 
+
+Save feature folder doesn't exists
+two_cranes_g23
+tensor([[ 0.0000,  0.0000,  0.0000,  ...,  0.0151,  0.2616,  0.0072],
+        [ 0.0000,  0.0000,  0.0000,  ...,  0.0096,  0.2537,  0.0129],
+        [ 0.0000,  0.0000,  0.0000,  ...,  0.0036,  0.2439,  0.0173],
+        ...,
+        [ 0.0000,  0.0000,  0.0000,  ...,  0.0031, -0.2191, -0.0558],
+        [ 0.0000,  0.0000,  0.0000,  ...,  0.0040, -0.1955, -0.0514],
+        [ 0.0000,  0.0000,  0.0000,  ..., -0.0038, -0.2533, -0.0478]])
+Evaluation Complete with kmeans clustering:
+Mean Clustering Error: 1.25%
+Median Clustering Error: 0.00% 
+
+two_cranes_g23
+tensor([[ 0.0000,  0.0000,  0.0000,  ...,  0.0151,  0.2616,  0.0072],
+        [ 0.0000,  0.0000,  0.0000,  ...,  0.0096,  0.2537,  0.0129],
+        [ 0.0000,  0.0000,  0.0000,  ...,  0.0036,  0.2439,  0.0173],
+        ...,
+        [ 0.0000,  0.0000,  0.0000,  ...,  0.0031, -0.2191, -0.0558],
+        [ 0.0000,  0.0000,  0.0000,  ...,  0.0040, -0.1955, -0.0514],
+        [ 0.0000,  0.0000,  0.0000,  ..., -0.0038, -0.2533, -0.0478]])
+Evaluation Complete with spectral clustering:
+Mean Clustering Error: 1.38%
+Median Clustering Error: 0.00% 
+
+two_cranes_g23
+tensor([[ 0.0000,  0.0000,  0.0000,  ...,  0.0151,  0.2616,  0.0072],
+        [ 0.0000,  0.0000,  0.0000,  ...,  0.0096,  0.2537,  0.0129],
+        [ 0.0000,  0.0000,  0.0000,  ...,  0.0036,  0.2439,  0.0173],
+        ...,
+        [ 0.0000,  0.0000,  0.0000,  ...,  0.0031, -0.2191, -0.0558],
+        [ 0.0000,  0.0000,  0.0000,  ...,  0.0040, -0.1955, -0.0514],
+        [ 0.0000,  0.0000,  0.0000,  ..., -0.0038, -0.2533, -0.0478]])
