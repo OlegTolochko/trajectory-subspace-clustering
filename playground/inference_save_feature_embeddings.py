@@ -6,11 +6,12 @@ from sklearn.cluster import AgglomerativeClustering, KMeans, SpectralClustering
 from sklearn.metrics.cluster import contingency_matrix
 from scipy.optimize import linear_sum_assignment
 import numpy as np
+import os
 
-
+feature_save_path = "./out/results"
 def load_model():
     model = TrajectoryEmbeddingModel()
-    load_path = 'out/models/trained_model_weights_normalized.pt'
+    load_path = '../out/models/trained_model_weights_normalized.pt'
 
     target_device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     state_dict = torch.load(load_path, map_location=target_device)
@@ -40,7 +41,7 @@ def calculate_clustering_error(labels_true, labels_pred):
 
 
 def load_trajectory_data():
-    dataset = Hopkins155("../data/test_samples/")
+    dataset = Hopkins155("../data/Hopkins155/")
     loaded_data = torch.utils.data.DataLoader(
         dataset,
         batch_size=1,
@@ -55,6 +56,7 @@ def evaluate_model_performance(model, data, cluster_algo_name='hierarchical'):
     individual_error_rates = []
     target_device = torch.device("cpu")
     model.to(target_device)
+    output_feature_dict = {}
     with torch.no_grad():
         for sequence in data:
             seq_x = sequence['trajectories'].to(target_device).squeeze(0)
@@ -69,6 +71,13 @@ def evaluate_model_performance(model, data, cluster_algo_name='hierarchical'):
             v = torch.cat((f, B_flat), dim=1)
             v = torch.nn.functional.normalize(v, p=2, dim=1)
             feats_np = v.cpu().numpy()
+            name = sequence["name"][0]
+            if name not in output_feature_dict.keys():
+                output_feature_dict[sequence["name"][0]] = v
+            else:
+                print(f"{name} already exists")
+                output_feature_dict[sequence["name"][0]] = [output_feature_dict[sequence["name"][0]]]
+                output_feature_dict[sequence["name"][0]].append(v)
 
             predicted_labels = None
             if cluster_algo_name == 'hierarchical':
@@ -93,6 +102,14 @@ def evaluate_model_performance(model, data, cluster_algo_name='hierarchical'):
     print(f"Evaluation Complete with {cluster_algo_name} clustering:")
     print(f"Mean Clustering Error: {mean_error_rate * 100:.2f}%")
     print(f"Median Clustering Error: {median_error_rate * 100:.2f}% \n")
+
+    if not os.path.isdir(feature_save_path):
+        print("Save feature folder doesn't exists")
+        os.mkdir(feature_save_path)
+    np.save(feature_save_path + "/trajectory_embedding.npy", output_feature_dict)
+    d2 = np.load(feature_save_path + "/trajectory_embedding.npy", allow_pickle=True)
+    print(sequence["name"][0])
+    print(d2.item().get(sequence["name"][0]))
 
     return mean_error_rate
 
