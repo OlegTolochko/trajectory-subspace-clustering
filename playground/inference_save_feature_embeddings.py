@@ -1,6 +1,6 @@
 import torch
 import sys
-# sys.path.append("/home/wiss/xian/Python_code/oleg/trajectory_embedding_learning/trajectory-subspace-clustering")
+sys.path.append("/home/wiss/xian/Python_code/oleg/trajectory_embedding_learning/trajectory-subspace-clustering")
 from models.trajectory_embedder import TrajectoryEmbeddingModel
 from datasets import Hopkins155
 from torch.utils.data import DataLoader
@@ -75,11 +75,11 @@ def evaluate_model_performance(model, data, cluster_algo_name='hierarchical'):
             feats_np = v.cpu().numpy()
             name = sequence["name"][0]
             if name not in output_feature_dict.keys():
-                output_feature_dict[sequence["name"][0]] = v
+                output_feature_dict[sequence["name"][0]] = feats_np
             else:
                 print(f"{name} already exists")
                 output_feature_dict[sequence["name"][0]] = [output_feature_dict[sequence["name"][0]]]
-                output_feature_dict[sequence["name"][0]].append(v)
+                output_feature_dict[sequence["name"][0]].append(feats_np)
 
             predicted_labels = None
             if cluster_algo_name == 'hierarchical':
