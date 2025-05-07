@@ -1,6 +1,6 @@
 import torch
 import sys
-sys.path.append("/home/wiss/xian/Python_code/oleg/trajectory_embedding_learning/trajectory-subspace-clustering")
+# sys.path.append("/home/wiss/xian/Python_code/oleg/trajectory_embedding_learning/trajectory-subspace-clustering")
 from models.trajectory_embedder import TrajectoryEmbeddingModel
 from datasets import Hopkins155
 from torch.utils.data import DataLoader
@@ -10,10 +10,10 @@ from scipy.optimize import linear_sum_assignment
 import numpy as np
 import os
 import pickle
-feature_save_path = "./out/results"
+feature_save_path = "../out/results"
 def load_model():
     model = TrajectoryEmbeddingModel()
-    load_path = './out/models/trained_model_weights_normalized.pt'
+    load_path = '../out/models/trained_model_weights_normalized.pt'
 
     target_device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     state_dict = torch.load(load_path, map_location=target_device)
@@ -43,7 +43,7 @@ def calculate_clustering_error(labels_true, labels_pred):
 
 
 def load_trajectory_data():
-    dataset = Hopkins155("./data/Hopkins155/")
+    dataset = Hopkins155("../data/Hopkins155/")
     loaded_data = torch.utils.data.DataLoader(
         dataset,
         batch_size=1,
