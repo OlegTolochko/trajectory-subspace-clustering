@@ -97,7 +97,7 @@ def evaluate_model_performance(model, data, cluster_algo_name='hierarchical'):
                 print(f"Error: Unknown clustering algorithm '{cluster_algo_name}'")
                 continue
 
-            if name not in output_feature_dict.keys():
+            if name not in output_label_dict.keys():
                 output_label_dict[sequence["name"][0]] = seq_labels_gt.numpy()
             else:
                 print(f"{name} already exists")
