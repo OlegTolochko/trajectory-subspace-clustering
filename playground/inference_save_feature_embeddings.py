@@ -59,6 +59,7 @@ def evaluate_model_performance(model, data, cluster_algo_name='hierarchical'):
     target_device = torch.device("cpu")
     model.to(target_device)
     output_feature_dict = {}
+    output_label_dict = {}
     with torch.no_grad():
         for sequence in data:
             seq_x = sequence['trajectories'].to(target_device).squeeze(0)
@@ -96,6 +97,14 @@ def evaluate_model_performance(model, data, cluster_algo_name='hierarchical'):
                 print(f"Error: Unknown clustering algorithm '{cluster_algo_name}'")
                 continue
 
+            if name not in output_feature_dict.keys():
+                output_label_dict[sequence["name"][0]] = seq_labels_gt.numpy()
+            else:
+                print(f"{name} already exists")
+                output_label_dict[sequence["name"][0]] = [output_label_dict[sequence["name"][0]]]
+                output_label_dict[sequence["name"][0]].append(seq_labels_gt.numpy())
+
+            # output_label_dict[sequence["name"][0]] = seq_labels_gt.numpy()
             error_rate = calculate_clustering_error(seq_labels_gt.numpy(), predicted_labels)
             individual_error_rates.append(error_rate)
 
@@ -108,8 +117,11 @@ def evaluate_model_performance(model, data, cluster_algo_name='hierarchical'):
     if not os.path.isdir(feature_save_path):
         print("Save feature folder doesn't exists")
         os.mkdir(feature_save_path)
-    with open(feature_save_path + "/trajectory_embedding.npy", 'wb') as handle:
+    with open(feature_save_path + "/trajectory_embedding", 'wb') as handle:
         pickle.dump(output_feature_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    with open(feature_save_path + "/trajectory_embedding_labels", 'wb') as handle:
+        pickle.dump(output_label_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
     # np.save(feature_save_path + "/trajectory_embedding.npy", output_feature_dict)
     # d2 = np.load(feature_save_path + "/trajectory_embedding.npy", allow_pickle=True)
     # print(sequence["name"][0])
