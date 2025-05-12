@@ -49,16 +49,21 @@ def load_trajectory_data():
     )
     return loaded_data
 
-def evaluate_model_performance(model, data, cluster_algo_name='hierarchical'):
+def evaluate_model_performance(model, data, cluster_algo_name='hierarchical', device_str='cpu'):
     individual_error_rates = []
-    target_device = torch.device("cpu")
+    if isinstance(device_str, torch.device):
+        target_device = device_str
+    else:
+        target_device = torch.device(device_str)
     nmi_scores = []
     ari_scores = []
     model.to(target_device)
+    model.eval()
     with torch.no_grad():
         for sequence in data:
             seq_x = sequence['trajectories'].to(target_device).squeeze(0)
-            seq_t = sequence['times'].squeeze(0)
+            seq_t = sequence['times'].to(target_device).squeeze(0)
+
             seq_labels_gt = sequence['labels'].squeeze(0)
             k_field = sequence['num_clusters']
             k = k_field.item() if torch.is_tensor(k_field) else int(k_field)
