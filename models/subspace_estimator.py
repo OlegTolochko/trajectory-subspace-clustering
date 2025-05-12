@@ -17,7 +17,7 @@ class SubspaceEstimator(nn.Module):
 
         
         self.mu_basis = nn.Parameter(torch.randn(self.num_basis_functions))
-        self.alpha_basis = nn.Parameter(torch.zeros(self.num_basis_functions))
+        self.alpha_basis = nn.Parameter(torch.randn(self.num_basis_functions))
         self.beta_basis = nn.Parameter(torch.randn(self.num_basis_functions))
         self.gamma_basis = nn.Parameter(torch.randn(self.num_basis_functions))
         
