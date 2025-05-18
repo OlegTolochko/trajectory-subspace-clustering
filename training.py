@@ -101,7 +101,7 @@ def train_model(train_set, batch_size=1, pretraining_epochs=20, full_epochs=50, 
             f_reconstructed = full_model.feature_extractor(x_recostructed_permuted)
             loss_featdiff = L_FeatDiff(f_original=f, f_reconstructed=f_reconstructed)
             
-            w_info = 0.5
+            w_info = 1.0
             w_res = 1.0
             w_feat = 1.0
 
