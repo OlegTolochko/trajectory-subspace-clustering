@@ -14,16 +14,17 @@ from datasets import Hopkins155
 from tqdm import tqdm
 
 def reconstruct_x(x_original, B_estimated):
-    try:
-        batch_size, seq_len, _ = x_original.shape
-        x_flattend = x_original.reshape(batch_size, 2*seq_len, 1)
-        
-        B_dagger = torch.linalg.pinv(B_estimated)
-        c = torch.bmm(B_dagger, x_flattend)
-        x_reconst_flat = torch.bmm(B_estimated, c)
-        x_reconst = x_reconst_flat.reshape(batch_size, seq_len, 2)
-    except:
-        print("Error occured in x reconstruction.")
+    with torch.no_grad():
+        try:
+            batch_size, seq_len, _ = x_original.shape
+            x_flattend = x_original.reshape(batch_size, 2*seq_len, 1)
+            
+            B_dagger = torch.linalg.pinv(B_estimated)
+            c = torch.bmm(B_dagger, x_flattend)
+            x_reconst_flat = torch.bmm(B_estimated, c)
+            x_reconst = x_reconst_flat.reshape(batch_size, seq_len, 2)
+        except:
+            print("Error occured in x reconstruction.")
     return x_reconst
 
 def train_model(train_set, batch_size=1, pretraining_epochs=20, full_epochs=50, learning_rate=0.001):
@@ -57,7 +58,7 @@ def train_model(train_set, batch_size=1, pretraining_epochs=20, full_epochs=50, 
             if num_points <= 1: continue
             
             optimizer_stage1.zero_grad()
-            mask = torch.rand_like(seq_x[..., :1]) > 0.25  # 25 % dropout
+            mask = torch.rand_like(seq_x[..., :1], device=device) > 0.25  # 25 % dropout
             seq_x = seq_x * mask
             # model input: (Batch=P, Channels=2, SeqLen=F)
             x_permuted = seq_x.permute(0, 2, 1) # (P, 2, F)

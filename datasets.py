@@ -163,17 +163,21 @@ class KT3DMoSeg(Dataset):
                     if 'GtLabel' in current_data_fields:
                         labels_load = mat_data_struct[0,0]['GtLabel'].reshape(-1)
 
-                    coords_2PF = trajectories_load[0:2, :, :] # (2, P, F)
-                    num_points = coords_2PF.shape[1]
-                    num_frames = coords_2PF.shape[2]
-                    trajectories_reshaped = np.transpose(coords_2PF, (1, 2, 0)) # (P, F, 2)
+                    coords = trajectories_load[0:2]
+                    scale  = float(np.hypot(1242, 375))
+                    coords = (coords - 0.5*scale) / (0.5*scale)
+                    print(coords)
+                            
+                    num_points = coords.shape[1]
+                    num_frames = coords.shape[2]
+                    coords = np.transpose(coords, (1, 2, 0)) # (P, F, 2)
 
                     base_time = torch.arange(num_frames)
                     time_vectors = base_time.unsqueeze(0).expand(num_points, -1)
                     
                     self.sequence_data.append({
                         'name': mat_file,
-                        'trajectories': trajectories_reshaped.astype(np.float32),
+                        'trajectories': coords.astype(np.float32),
                         'times': time_vectors,
                         'labels': labels_load.astype(np.int64)
                     })
