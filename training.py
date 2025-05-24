@@ -1,7 +1,7 @@
 import torch
 from models.trajectory_embedder import TrajectoryEmbeddingModel
 from models.subspace_estimator import SubspaceEstimator
-from losses import L_FeatDiff, L_InfoNCE, L_Residual
+from losses import L_FeatDiff, L_InfoNCE, L_Residual, L_orthogonal
 import torch.optim as optim
 from torch.utils.data import DataLoader
 import torch.nn.functional as F
@@ -10,7 +10,7 @@ import os
 import numpy as np
 from sklearn.model_selection import train_test_split
 from inference import compare_all_clustering_methods
-from datasets import Hopkins155
+from datasets import Hopkins155, KT3DMoSeg
 from tqdm import tqdm
 
 def reconstruct_x(x_original, B_estimated):
@@ -27,8 +27,9 @@ def reconstruct_x(x_original, B_estimated):
             print("Error occured in x reconstruction.")
     return x_reconst
 
-def train_model(train_set, batch_size=1, pretraining_epochs=20, full_epochs=50, learning_rate=0.001):
+def train_model(train_set, batch_size=1, pretraining_epochs=150, full_epochs=250, learning_rate=0.001):
     full_model = TrajectoryEmbeddingModel()
+    include_ortho_loss = True
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(device)
@@ -79,6 +80,10 @@ def train_model(train_set, batch_size=1, pretraining_epochs=20, full_epochs=50, 
         full_model.train()
         epoch_loss_stage2 = 0.0
         num_seq_processed = 0
+        w_info_sum = 0.0
+        w_res_sum = 0.0
+        w_feat_sum = 0.0
+        w_ortho_sum = 0.0
         for batch_data in train_loader:
             seq_x = batch_data['trajectories'].to(device).squeeze(0) # (P, F, 2)
             seq_labels = batch_data['labels'].to(device).squeeze(0) # (P,)
@@ -86,7 +91,7 @@ def train_model(train_set, batch_size=1, pretraining_epochs=20, full_epochs=50, 
             num_points = seq_x.shape[0]
             
             optimizer_stage2.zero_grad()
-            f, B = full_model(seq_x, seq_t)
+            f, B, h_t = full_model(seq_x, seq_t)
             
             B_flat = B.view(num_points, -1) # (P, 2F*rank)
             v = torch.cat((f, B_flat), dim=1)
@@ -100,20 +105,35 @@ def train_model(train_set, batch_size=1, pretraining_epochs=20, full_epochs=50, 
             
             f_reconstructed = full_model.feature_extractor(x_recostructed_permuted)
             loss_featdiff = L_FeatDiff(f_original=f, f_reconstructed=f_reconstructed)
+            if include_ortho_loss:
+                loss_ortho = L_orthogonal(h_t)
+            else:
+                loss_ortho = torch.tensor(0.0, device=device)
             
             w_info = 1.0
             w_res = 1.0
-            w_feat = 1.0
+            w_feat = 0.0
+            w_ortho = 0.01
 
-            total_loss = (w_info * loss_infoNCE + w_res * loss_residual + w_feat * loss_featdiff)
+            w_info_sum += w_info * loss_infoNCE
+            w_res_sum += w_res * loss_residual
+            w_feat_sum += w_feat * loss_featdiff
+            w_ortho_sum += w_ortho*loss_ortho
+            
+            total_loss = (w_info * loss_infoNCE + w_res * loss_residual + w_feat * loss_featdiff + w_ortho*loss_ortho)
             total_loss.backward()
             optimizer_stage2.step()
             epoch_loss_stage2 += total_loss.item()
             num_seq_processed += 1
         
         scheduler_stage2.step()
-        avg_epoch_loss = epoch_loss_stage2 / num_seq_processed if num_seq_processed > 0 else 0.0
+        avg_epoch_loss = epoch_loss_stage2 / num_seq_processed
+        mean_w_info = w_info_sum / num_seq_processed
+        mean_w_res = w_res_sum / num_seq_processed
+        mean_w_feat = w_feat_sum / num_seq_processed
+        mean_w_ortho = w_ortho_sum / num_seq_processed
         print(f"Full Training Epoch {epoch + 1}/{full_epochs}, Avg Loss: {avg_epoch_loss:.4f}")
+        print(f"Epoch {epoch + 1}/{full_epochs}: InfoNCE Loss: {mean_w_info:.4f}, Res Loss: {mean_w_res:.4f}, Feat Loss: {mean_w_feat:.4f}, Ortho Loss: {mean_w_ortho:.4f}")
 
     return full_model
 

@@ -17,6 +17,6 @@ class TrajectoryEmbeddingModel(nn.Module):
         x_permuted = x.permute(0, 2, 1) # (Batch, 2, SeqLen) for Conv1d
         f = self.feature_extractor(x_permuted)
 
-        B = self.subspace_estimator(f, t)
+        B, h_t = self.subspace_estimator(f, t)
 
-        return f, B
+        return f, B, h_t

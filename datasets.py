@@ -87,7 +87,7 @@ class Hopkins12(Dataset):
                 x_data_load = None
                 if 'x' in mat_data:
                     x_data_load = mat_data['x']
-                
+
                 coords_2PF = x_data_load[0:2, :, :] # (2, P, F)
                 num_points = coords_2PF.shape[1]
                 num_frames = coords_2PF.shape[2]
@@ -166,7 +166,6 @@ class KT3DMoSeg(Dataset):
                     coords = trajectories_load[0:2]
                     scale  = float(np.hypot(1242, 375))
                     coords = (coords - 0.5*scale) / (0.5*scale)
-                    print(coords)
                             
                     num_points = coords.shape[1]
                     num_frames = coords.shape[2]

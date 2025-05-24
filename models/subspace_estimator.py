@@ -60,4 +60,4 @@ class SubspaceEstimator(nn.Module):
         B = torch.bmm(H, omega)
         I_blk = torch.eye(2, self.subspace_rank, device=B.device) # 2×4
         B[:, :2, :self.subspace_rank] = I_blk 
-        return B
+        return B, h_t

@@ -1,6 +1,6 @@
 import torch
 from models.trajectory_embedder import TrajectoryEmbeddingModel
-from datasets import Hopkins155
+from datasets import Hopkins155, KT3DMoSeg, Hopkins12
 from torch.utils.data import DataLoader
 from sklearn.cluster import AgglomerativeClustering, KMeans, SpectralClustering
 from sklearn.metrics.cluster import contingency_matrix
@@ -39,7 +39,7 @@ def calculate_clustering_error(labels_true, labels_pred):
     return error_rate
 
 def load_trajectory_data():
-    dataset = Hopkins155()
+    dataset = KT3DMoSeg()
     loaded_data = torch.utils.data.DataLoader(
         dataset,
         batch_size=1,
@@ -69,7 +69,7 @@ def evaluate_model_performance(model, data, cluster_algo_name='hierarchical', de
             k = k_field.item() if torch.is_tensor(k_field) else int(k_field)
             seq_name = sequence['name'][0]
             
-            f, B = model(seq_x, seq_t)
+            f, B, _ = model(seq_x, seq_t)
             B_flat = B.view(B.size(0), -1)
             v = torch.cat((f, B_flat), dim=1)
             v = torch.nn.functional.normalize(v, p=2, dim=1)
