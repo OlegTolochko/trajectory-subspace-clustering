@@ -18,16 +18,16 @@ def reconstruct_x(x_original, B_estimated):
         try:
             batch_size, seq_len, _ = x_original.shape
             x_flattend = x_original.reshape(batch_size, 2*seq_len, 1)
+            solution = torch.linalg.lstsq(B_estimated, x_flattend)
+            c = solution.solution
             
-            B_dagger = torch.linalg.pinv(B_estimated)
-            c = torch.bmm(B_dagger, x_flattend)
             x_reconst_flat = torch.bmm(B_estimated, c)
             x_reconst = x_reconst_flat.reshape(batch_size, seq_len, 2)
-        except:
-            print("Error occured in x reconstruction.")
+        except Exception as e:
+            print(f"Error occurred in x reconstruction: {e}")
     return x_reconst
 
-def train_model(train_set, batch_size=1, pretraining_epochs=150, full_epochs=250, learning_rate=0.001):
+def train_model(train_set, batch_size=1, pretraining_epochs=100, full_epochs=200, learning_rate=0.001):
     full_model = TrajectoryEmbeddingModel()
     include_ortho_loss = True
     
@@ -39,12 +39,7 @@ def train_model(train_set, batch_size=1, pretraining_epochs=150, full_epochs=250
     scheduler_stage1 = ExponentialLR(optimizer_stage1, gamma=0.999)
     scheduler_stage2 = ExponentialLR(optimizer_stage2, gamma=0.999)
     
-    train_loader = DataLoader(train_set,
-                        batch_size=batch_size,
-                        shuffle=True,
-                        num_workers=8,
-                        pin_memory=True,
-                        persistent_workers=True if os.name == 'nt' else False)
+    train_loader = DataLoader(train_set, batch_size=batch_size)
     
     # pretraining:
     for epoch in tqdm(range(pretraining_epochs), desc="Pretraining Model"):
@@ -155,8 +150,8 @@ def main():
         print("Model training failed.")
     
     eval_model(model=trained_model, val_set=val_set)
-    
-    pytorch_save_path = 'out/models/trained_model_weights_normalized.pt'
+
+    pytorch_save_path = 'out/models/hopk155_100_200_ortho.pt'
     print(f"Saving model state_dict to {pytorch_save_path}...")
     torch.save(trained_model.state_dict(), pytorch_save_path)
     print("Saved.")

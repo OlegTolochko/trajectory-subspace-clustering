@@ -11,7 +11,7 @@ import numpy as np
 
 def load_model():    
     model = TrajectoryEmbeddingModel()
-    load_path = 'out/models/trained_model_weights_normalized.pt'
+    load_path = 'out/models/hopk155_100_200_ortho.pt'
 
     target_device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     state_dict = torch.load(load_path, map_location=target_device)
@@ -39,14 +39,8 @@ def calculate_clustering_error(labels_true, labels_pred):
     return error_rate
 
 def load_trajectory_data():
-    dataset = KT3DMoSeg()
-    loaded_data = torch.utils.data.DataLoader(
-        dataset,
-        batch_size=1,
-        shuffle=False,
-        num_workers=4,
-        pin_memory=True,
-    )
+    dataset = Hopkins155()
+    loaded_data = torch.utils.data.DataLoader(dataset, batch_size=1,)
     return loaded_data
 
 def evaluate_model_performance(model, data, cluster_algo_name='hierarchical', device_str='cpu'):
