@@ -155,7 +155,7 @@ def load_dataset(dataset_name):
         raise ValueError(f"Unknown dataset: {dataset_name}")
 
 def train_different_model_configurations():
-    data_set_name = 'KT3DMoSeg'
+    data_set_name = 'Hopkins155'
     train_dataset = load_dataset(data_set_name)
     pretraining_epochs = 100
     full_epochs = 200
@@ -232,22 +232,36 @@ def generate_model_filename(dataset_name, pretraining_epochs, full_epochs, confi
     return f'out/models/{"_".join(parts)}.pt'
 
 def main():
-    train_dataset = load_dataset('Hopkins155')
+    dataset_name = 'Hopkins155'
+    train_dataset = load_dataset(dataset_name)
 
     seq_ids = list(range(len(train_dataset)))
     train_ids, val_ids = train_test_split(seq_ids, test_size=0.2, random_state=42, shuffle=True)
     train_set = torch.utils.data.Subset(train_dataset, train_ids)
     val_set   = torch.utils.data.Subset(train_dataset, val_ids)
+    
+    alph0 = False
+    include_ortho_loss = False
+    include_feat_loss = True
+    print(f"Training model on {dataset_name} with alph0={alph0}, include_ortho_loss={include_ortho_loss}, include_feat_loss={include_feat_loss}")
 
-    trained_model = train_model(train_set=train_set, alph0=False, include_ortho_loss=False, include_featloss=True)
+    trained_model = train_model(train_set=train_set, alph0=alph0, include_ortho_loss=include_ortho_loss, include_feat_loss=include_feat_loss)
     if trained_model:
         print("Model training complete.")
     else:
         print("Model training failed.")
     
     eval_model(model=trained_model, val_set=val_set)
-
-    pytorch_save_path = 'out/models/hopk155_100_200_split_exfeat_noortho.pt'
+    
+    model_filename = generate_model_filename(
+        dataset_name=dataset_name,
+        pretraining_epochs=100,
+        full_epochs=200,
+        config={"incfeat": include_feat_loss, "ortho": include_ortho_loss, "alph0": alph0},
+        train_on_full_dataset=False
+    )
+    
+    pytorch_save_path = f'{model_filename}'
     print(f"Saving model state_dict to {pytorch_save_path}...")
     torch.save(trained_model.state_dict(), pytorch_save_path)
     print("Saved.")
