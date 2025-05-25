@@ -27,22 +27,29 @@ def reconstruct_x(x_original, B_estimated):
             print(f"Error occurred in x reconstruction: {e}")
     return x_reconst
 
-def train_model(train_set, batch_size=1, pretraining_epochs=100, full_epochs=200, learning_rate=0.001):
-    full_model = TrajectoryEmbeddingModel()
-    include_ortho_loss = True
+def train_model(train_set, batch_size=1, pretraining_epochs=100, full_epochs=200, learning_rate=0.001, alph0=False, include_ortho_loss=False, include_feat_loss=True):
+    full_model = TrajectoryEmbeddingModel(alph0=alph0)
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(device)
     full_model = full_model.to(device)
+    torch.backends.cudnn.benchmark = True
     optimizer_stage1 = optim.Adam(full_model.feature_extractor.parameters(), lr=learning_rate, weight_decay=1e-5)
     optimizer_stage2 = optim.Adam(full_model.parameters(), lr=learning_rate, weight_decay=1e-5)
     scheduler_stage1 = ExponentialLR(optimizer_stage1, gamma=0.999)
     scheduler_stage2 = ExponentialLR(optimizer_stage2, gamma=0.999)
     
-    train_loader = DataLoader(train_set, batch_size=batch_size)
+    train_loader = DataLoader(
+        train_set, 
+        batch_size=batch_size,
+        shuffle=True,
+        num_workers=4,
+        pin_memory=True,
+        persistent_workers=True
+    )
     
     # pretraining:
-    for epoch in tqdm(range(pretraining_epochs), desc="Pretraining Model"):
+    for epoch in tqdm(range(pretraining_epochs), desc="Pretraining Model", miniters=10):
         epoch_loss_stage1 = 0.0
         num_seq_processed = 0
         full_model.feature_extractor.train()
@@ -69,9 +76,9 @@ def train_model(train_set, batch_size=1, pretraining_epochs=100, full_epochs=200
         avg_epoch_loss = epoch_loss_stage1 / num_seq_processed if num_seq_processed > 0 else 0.0
         print(f"Pretraining Epoch {epoch + 1}/{pretraining_epochs}, Avg Loss: {avg_epoch_loss:.4f}")
 
-        
-    # full model training:    
-    for epoch in tqdm(range(full_epochs), desc="Training Full Model"):
+
+    # full model training:
+    for epoch in tqdm(range(full_epochs), desc="Training Full Model", miniters=10):
         full_model.train()
         epoch_loss_stage2 = 0.0
         num_seq_processed = 0
@@ -99,15 +106,19 @@ def train_model(train_set, batch_size=1, pretraining_epochs=100, full_epochs=200
             loss_residual = L_Residual(x_original=seq_x, x_reconstructed=x_recostructed)
             
             f_reconstructed = full_model.feature_extractor(x_recostructed_permuted)
-            loss_featdiff = L_FeatDiff(f_original=f, f_reconstructed=f_reconstructed)
             if include_ortho_loss:
                 loss_ortho = L_orthogonal(h_t)
             else:
                 loss_ortho = torch.tensor(0.0, device=device)
+
+            if include_feat_loss:
+                loss_featdiff = L_FeatDiff(f_original=f, f_reconstructed=f_reconstructed)
+            else:
+                loss_featdiff = torch.tensor(0.0, device=device)
             
             w_info = 1.0
             w_res = 1.0
-            w_feat = 0.0
+            w_feat = 1.0
             w_ortho = 0.01
 
             w_info_sum += w_info * loss_infoNCE
@@ -134,16 +145,101 @@ def train_model(train_set, batch_size=1, pretraining_epochs=100, full_epochs=200
 
 def eval_model(model, val_set):
     compare_all_clustering_methods(model=model, data=val_set)
+
+def load_dataset(dataset_name):
+    if dataset_name == 'Hopkins155':
+        return Hopkins155()
+    elif dataset_name == 'KT3DMoSeg':
+        return KT3DMoSeg()
+    else:
+        raise ValueError(f"Unknown dataset: {dataset_name}")
+
+def train_different_model_configurations():
+    data_set_name = 'KT3DMoSeg'
+    train_dataset = load_dataset(data_set_name)
+    pretraining_epochs = 100
+    full_epochs = 200
+    train_on_full_dataset = True
+    train_set = None
+    val_set = None
+
+    if train_on_full_dataset:
+        train_set = train_dataset
+    else:
+        seq_ids = list(range(len(train_dataset)))
+        train_ids, val_ids = train_test_split(seq_ids, test_size=0.2, random_state=42, shuffle=True)
+        train_set = torch.utils.data.Subset(train_dataset, train_ids)
+        val_set = torch.utils.data.Subset(train_dataset, val_ids)   
+
+    configurations = [
+        {"incfeat": True, "ortho": True, "alph0": True},
+        {"incfeat": True, "ortho": True, "alph0": False},
+        {"incfeat": True, "ortho": False, "alph0": True},
+        {"incfeat": True, "ortho": False, "alph0": False},
+        {"incfeat": False, "ortho": True, "alph0": True},
+        {"incfeat": False, "ortho": True, "alph0": False},
+        {"incfeat": False, "ortho": False, "alph0": True},
+        {"incfeat": False, "ortho": False, "alph0": False},
+    ]
+
+    for config in configurations:
+        print(f"Training with config: {config}")
+        trained_model = train_model(
+            train_set=train_set,
+            pretraining_epochs=pretraining_epochs,
+            full_epochs=full_epochs,
+            alph0=config["alph0"],
+            include_ortho_loss=config["ortho"],
+            include_feat_loss=config["incfeat"]
+        )
+        
+        if trained_model:   
+            print("Model training complete.")
+        else:
+            print("Model training failed.")
+
+        if val_set is None:
+            val_set = train_set
+        else:
+            eval_model(model=trained_model, val_set=val_set)
+
+        pytorch_save_path = generate_model_filename(
+            data_set_name, pretraining_epochs, full_epochs, config, train_on_full_dataset
+        )
+        print(f"Saving model state_dict to {pytorch_save_path}...")
+        torch.save(trained_model.state_dict(), pytorch_save_path)
+        print("Saved.")
+
+def generate_model_filename(dataset_name, pretraining_epochs, full_epochs, config, train_on_full_dataset):
+    dataset_mapping = {
+        'Hopkins155': 'hopk155',
+        'KT3DMoSeg': 'kt'
+    }
+    prefix = dataset_mapping.get(dataset_name, dataset_name.lower())
     
+    parts = [
+        prefix,
+        str(pretraining_epochs),
+        str(full_epochs),
+        "full" if train_on_full_dataset else "split",
+        "incfeat" if config["incfeat"] else "exfeat",
+        "ortho" if config["ortho"] else "noortho"
+    ]
+    
+    if config["alph0"]:
+        parts.append("alph0")
+    
+    return f'out/models/{"_".join(parts)}.pt'
+
 def main():
-    train_dataset = Hopkins155()
+    train_dataset = load_dataset('Hopkins155')
 
     seq_ids = list(range(len(train_dataset)))
     train_ids, val_ids = train_test_split(seq_ids, test_size=0.2, random_state=42, shuffle=True)
     train_set = torch.utils.data.Subset(train_dataset, train_ids)
     val_set   = torch.utils.data.Subset(train_dataset, val_ids)
-    
-    trained_model = train_model(train_set=train_set)
+
+    trained_model = train_model(train_set=train_set, alph0=False, include_ortho_loss=False, include_featloss=True)
     if trained_model:
         print("Model training complete.")
     else:
@@ -151,10 +247,10 @@ def main():
     
     eval_model(model=trained_model, val_set=val_set)
 
-    pytorch_save_path = 'out/models/hopk155_100_200_ortho.pt'
+    pytorch_save_path = 'out/models/hopk155_100_200_split_exfeat_noortho.pt'
     print(f"Saving model state_dict to {pytorch_save_path}...")
     torch.save(trained_model.state_dict(), pytorch_save_path)
     print("Saved.")
     
 if __name__ == '__main__':
-    main()
+    train_different_model_configurations()

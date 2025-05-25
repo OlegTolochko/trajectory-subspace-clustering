@@ -4,11 +4,11 @@ from .feature_extractor import FeatureExtractor
 from .subspace_estimator import SubspaceEstimator
 
 class TrajectoryEmbeddingModel(nn.Module):
-    def __init__(self):
+    def __init__(self, alph0=False):
         super(TrajectoryEmbeddingModel, self).__init__()
         
         self.feature_extractor = FeatureExtractor()
-        self.subspace_estimator = SubspaceEstimator()
+        self.subspace_estimator = SubspaceEstimator(alph0=alph0)
     
     def forward(self, x, t):
         # x: (Batch, SeqLen, 2)

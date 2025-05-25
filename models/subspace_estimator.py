@@ -2,11 +2,12 @@ import torch.nn as nn
 import torch
 
 class SubspaceEstimator(nn.Module):
-    def __init__(self, embedding_dimension=128, num_basis_functions=64, subspace_rank = 4):
+    def __init__(self, alph0=False, embedding_dimension=128, num_basis_functions=64, subspace_rank = 4):
         super(SubspaceEstimator, self).__init__()
         self.num_basis_functions = num_basis_functions
         self.subspace_rank = subspace_rank
-        
+        self.alph0 = alph0
+
         self.coeff_net = nn.Sequential(
             nn.Linear(embedding_dimension, 512),
             nn.ReLU(),
@@ -15,7 +16,7 @@ class SubspaceEstimator(nn.Module):
             nn.Linear(1024, 512)
         )
 
-        
+
         self.mu_basis = nn.Parameter(torch.randn(self.num_basis_functions))
         self.alpha_basis = nn.Parameter(torch.randn(self.num_basis_functions))
         self.beta_basis = nn.Parameter(torch.randn(self.num_basis_functions))
@@ -32,7 +33,10 @@ class SubspaceEstimator(nn.Module):
         beta_reshaped = self.beta_basis.view(1,1,-1) # (1,1,N=64)
         gamma_reshaped = self.gamma_basis.view(1,1,-1) # (1,1,N=64)
         
-        term1 = torch.exp(-(alpha_reshaped*(t_reshaped-mu_reshaped))**2)
+        if self.alph0:
+            term1 = 1
+        else:
+            term1 = torch.exp(-(alpha_reshaped*(t_reshaped-mu_reshaped))**2)
         term2 = torch.cos(beta_reshaped*t_reshaped + gamma_reshaped)
         h_t = term1 * term2
         return h_t # (Batch, SequenceLength, N=64)
