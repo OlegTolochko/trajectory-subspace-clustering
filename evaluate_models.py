@@ -88,7 +88,28 @@ class ModelEvaluator:
         
         return model
     
-    def evaluate_single_model(self, model_path):
+    def test_orthogonality(self, model):
+        subspace_estimator = model.subspace_estimator
+        device = next(subspace_estimator.parameters()).device
+
+        seq_length = 300
+        t_vector = torch.arange(seq_length, dtype=torch.float32).to(device)
+        t_vector_batch = t_vector.unsqueeze(0)
+
+        with torch.no_grad():
+            h_t_values = subspace_estimator.calculate_basis_functions(t_vector_batch)
+
+        basis_function_vectors = h_t_values.squeeze(0).cpu().numpy()
+        N_basis_functions = basis_function_vectors.shape[1]
+
+        normalized_basis_vectors = basis_function_vectors / (np.linalg.norm(basis_function_vectors, axis=0, keepdims=True) + 1e-9)
+        cosine_sim_matrix = normalized_basis_vectors.T @ normalized_basis_vectors
+
+        diag_mask = ~np.eye(N_basis_functions, dtype=bool) 
+        mean_abs_off_diagonal_cosine_sim = np.mean(np.abs(cosine_sim_matrix[diag_mask]))
+        return mean_abs_off_diagonal_cosine_sim
+
+    def evaluate_single_model(self, model_path, include_orthogonality=True):
         model_name = Path(model_path).name
         print(f"\nEvaluating model: {model_name}")
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -113,6 +134,15 @@ class ModelEvaluator:
             'orthogonality': config['orthogonality']
         }
         
+        if include_orthogonality:
+            try:
+                orthogonality_score = self.test_orthogonality(model)
+                results['orthogonality_measure'] = orthogonality_score
+                print(f"Orthogonality measure: {orthogonality_score:.4f}")
+            except Exception as e:
+                print(f"Failed to calculate orthogonality measure: {e}")
+                results['orthogonality_measure'] = None
+    
         algorithms = ['hierarchical', 'kmeans', 'spectral']
         print(f"Evaluating on training data...")
         
@@ -150,7 +180,7 @@ class ModelEvaluator:
         
         return results
     
-    def evaluate_models(self, model_names = None):
+    def evaluate_models(self, model_names=None, include_orthogonality=True):
         if model_names is None:
             model_files = list(self.models_dir.glob('*.pt'))
             model_names = [f.name for f in model_files]
@@ -165,7 +195,7 @@ class ModelEvaluator:
                 print(f"Model file not found: {model_path}")
                 continue
                 
-            result = self.evaluate_single_model(str(model_path))
+            result = self.evaluate_single_model(str(model_path), include_orthogonality)
             if result is not None:
                 all_results.append(result)
         
@@ -182,15 +212,18 @@ class ModelEvaluator:
             if test_col in df.columns:
                 df[f'test_{algo}_mean'] = df[test_col]
                 df[f'test_{algo}_median'] = df[test_col]
-        
+    
         return df
-
+    
     def create_comparison_table(self, df):
         if df.empty:
             return df
             
         comparison_cols = ['model_name', 'dataset', 'pretraining_epochs', 'full_epochs', 'trained_on_full', 
                           'orthogonality', 'feature_diff_excluded', 'alpha_zero']
+        
+        if 'orthogonality_measure' in df.columns:
+            comparison_cols.append('orthogonality_measure')
         
         algorithms = ['hierarchical', 'kmeans', 'spectral']
         for algo in algorithms:
@@ -215,7 +248,12 @@ class ModelEvaluator:
                     lambda x: f"{x*100:.2f}%" if pd.notnull(x) else "N/A"
                 )
                 comparison_df[col] = comparison_df[col].replace('N/A', pd.NA)
-    
+
+        if 'orthogonality_measure' in comparison_df.columns:
+            comparison_df['orthogonality_measure'] = comparison_df['orthogonality_measure'].apply(
+                lambda x: f"{x:.4f}" if pd.notnull(x) else "N/A"
+            )
+
         return comparison_df
 
     
@@ -277,15 +315,27 @@ class ModelEvaluator:
         
         return '_'.join(parts)
 
-    def create_typst_table(self, df, save_path = 'out/model_table.typ'):
+    def create_typst_table(self, df, save_path = 'out/model_table.typ', include_orthogonality=True):
         display_df = df.copy()
         
         dataset_name = display_df['dataset'].iloc[0].upper()
         pre_epochs = display_df['pretraining_epochs'].iloc[0]
         full_epochs = display_df['full_epochs'].iloc[0]
         
+        has_hopkins12 = False
+        if 'hopkins12_hierarchical_error' in df.columns:
+            hopkins12_col = df['hopkins12_hierarchical_error']
+            has_hopkins12 = (hopkins12_col.notna() & (hopkins12_col != 'N/A')).any()
         
-        has_hopkins12 = df['hopkins12_hierarchical_error'].notna().any() if 'hopkins12_hierarchical_error' in df.columns else False
+        has_orthogonality = include_orthogonality and 'orthogonality_measure' in df.columns
+        
+        base_cols = 3
+        total_cols = base_cols
+        if has_hopkins12:
+            total_cols += 1
+        if has_orthogonality:
+            total_cols += 1
+        
         typst_code = """#set table(
     stroke: (x, y) => if y == 2 {
         (bottom: 1pt + black)
@@ -303,14 +353,21 @@ class ModelEvaluator:
 
 #figure([
 #table(
-    columns: """ + str(4 if has_hopkins12 else 3) + """,
+    columns: """ + str(total_cols) + """,
     stroke: none,
-    table.cell(colspan: """ + str(4 if has_hopkins12 else 3) + """)[#align(center)[*""" + dataset_name + """ Model Comparison*]],
+    table.cell(colspan: """ + str(total_cols) + """)[#align(center)[*""" + dataset_name + """ Model Comparison*]],
     table.hline(stroke: 0.5pt),
-    [*Configuration*], [*Train*], [*Test*],""" + (" [*Hopkins12*]," if has_hopkins12 else "") + """
+    [*Configuration*], [*Train*], [*Test*],"""
+        
+        if has_hopkins12:
+            typst_code += " [*Hopkins12*],"
+        if has_orthogonality:
+            typst_code += " [*Orthogonality*],"
+        
+        typst_code += """
     table.hline(stroke: 0.5pt),
 """
-        
+    
         for _, row in display_df.iterrows():
             config = self.parse_model_name(row['model_name'])
             config_desc = []
@@ -320,7 +377,7 @@ class ModelEvaluator:
                 config_desc.append('FeatDiff')
             if config['alpha_zero']:
                 config_desc.append('$alpha=0$')
-            
+        
             config_str = ', '.join(config_desc) if config_desc else 'Baseline'
             
             train_error = row.get('train_hierarchical_error', 'N/A')
@@ -344,22 +401,35 @@ class ModelEvaluator:
                 hopkins12_formatted = format_compact_error(hopkins12_error)
                 row_line += f", [{hopkins12_formatted}]"
             
+            if has_orthogonality:
+                ortho_measure = row.get('orthogonality_measure', 'N/A')
+                if pd.isna(ortho_measure) or ortho_measure == 'N/A':
+                    ortho_formatted = '-'
+                else:
+                    ortho_formatted = ortho_measure
+                row_line += f", [{ortho_formatted}]"
+            
             typst_code += row_line + ",\n"
         
         typst_code += """    table.hline(stroke: 0.5pt),
-    table.cell(colspan: """ + str(4 if has_hopkins12 else 3) + """)[#align(center)[""" + str(pre_epochs) + """ pre-training epochs, """ + str(full_epochs) + """ full training epochs]],
-    table.cell(colspan: """ + str(4 if has_hopkins12 else 3) + """)[#align(center)[evaluation on Hierarchical Clustering with Mean Clustering Error]],
+    table.cell(colspan: """ + str(total_cols) + """)[#align(center)[""" + str(pre_epochs) + """ pre-training epochs, """ + str(full_epochs) + """ full training epochs]],
+    table.cell(colspan: """ + str(total_cols) + """)[#align(center)[evaluation on Hierarchical Clustering with Mean Clustering Error"""
+        
+        if has_orthogonality:
+            typst_code += " + Basis Function Orthogonality"
+        
+        typst_code += """]],
 ),
 ]) <model-config-table>
 """
-    
+
         with open(save_path, 'w') as f:
             f.write(typst_code)
-        
+    
         print(f"Typst table saved to {save_path}")
         return typst_code
-    
-    def create_tables(self, df):
+
+    def create_tables(self, df, include_orthogonality=True):
         unique_base_training_configs = df[['dataset', 'pretraining_epochs', 'full_epochs']].drop_duplicates()
         
         for _, config_row in unique_base_training_configs.iterrows():
@@ -377,7 +447,7 @@ class ModelEvaluator:
                 continue
             
             save_path = f'out/model_table_{dataset}_{pre_epochs}_{full_epochs}.typ'
-            self.create_typst_table(filtered_df, save_path)
+            self.create_typst_table(filtered_df, save_path, include_orthogonality)
             self.create_heatmap_visualization(filtered_df, save_path.replace('.typ', '_heatmap.png'))
             
 
@@ -385,19 +455,15 @@ def main():
     evaluator = ModelEvaluator()
     
     models_to_evaluate = []
-    results_df = evaluator.evaluate_models()
+    results_df = evaluator.evaluate_models(include_orthogonality=True)
     comparison_table = evaluator.create_comparison_table(results_df)
     
     results_df.to_csv('out/model_evaluation_detailed.csv', index=False)
     comparison_table.to_csv('out/model_comparison_table.csv', index=False)
 
-    evaluator.create_tables(comparison_table)
-    
+    evaluator.create_tables(comparison_table, include_orthogonality=True)
+
     return results_df, comparison_table
 
 if __name__ == '__main__':
-    evaluator = ModelEvaluator()
-    evaluation_table = pd.read_csv('out/model_evaluation_detailed.csv')
-    comparison_table = evaluator.create_comparison_table(evaluation_table)
-    
-    evaluator.create_tables(comparison_table)
+    main()
