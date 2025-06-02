@@ -10,7 +10,7 @@ import os
 import numpy as np
 from sklearn.model_selection import train_test_split
 from inference import compare_all_clustering_methods
-from datasets import Hopkins155, KT3DMoSeg
+from datasets import Hopkins155, KT3DMoSeg, Hopkins12
 from tqdm import tqdm
 
 def reconstruct_x(x_original, B_estimated):
@@ -151,15 +151,17 @@ def load_dataset(dataset_name):
         return Hopkins155()
     elif dataset_name == 'KT3DMoSeg':
         return KT3DMoSeg()
+    elif dataset_name == 'Hopkins12':
+        return Hopkins12()
     else:
         raise ValueError(f"Unknown dataset: {dataset_name}")
 
 def train_different_model_configurations():
-    data_set_name = 'Hopkins155'
+    data_set_name = 'Hopkins12'
     train_dataset = load_dataset(data_set_name)
-    pretraining_epochs = 100
-    full_epochs = 200
-    train_on_full_dataset = True
+    pretraining_epochs = 50
+    full_epochs = 100
+    train_on_full_dataset = False
     train_set = None
     val_set = None
 
@@ -213,7 +215,8 @@ def train_different_model_configurations():
 def generate_model_filename(dataset_name, pretraining_epochs, full_epochs, config, train_on_full_dataset):
     dataset_mapping = {
         'Hopkins155': 'hopk155',
-        'KT3DMoSeg': 'kt'
+        'Hopkins12': 'hopk12',
+        'KT3DMoSeg': 'kt',
     }
     prefix = dataset_mapping.get(dataset_name, dataset_name.lower())
     
@@ -232,7 +235,7 @@ def generate_model_filename(dataset_name, pretraining_epochs, full_epochs, confi
     return f'out/models/{"_".join(parts)}.pt'
 
 def main():
-    dataset_name = 'Hopkins155'
+    dataset_name = 'Hopkins12'
     train_dataset = load_dataset(dataset_name)
 
     seq_ids = list(range(len(train_dataset)))
