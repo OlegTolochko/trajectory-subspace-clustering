@@ -27,7 +27,7 @@ def reconstruct_x(x_original, B_estimated):
             print(f"Error occurred in x reconstruction: {e}")
     return x_reconst
 
-def train_model(train_set, batch_size=1, pretraining_epochs=100, full_epochs=200, learning_rate=0.001, alph0=False, include_ortho_loss=False, include_feat_loss=True):
+def train_model(train_set, batch_size=1, pretraining_epochs=100, full_epochs=200, learning_rate=0.001, alph0=False, include_ortho_loss=False, include_feat_loss=True, use_sequence_randomization=False):
     full_model = TrajectoryEmbeddingModel(alph0=alph0)
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -76,7 +76,6 @@ def train_model(train_set, batch_size=1, pretraining_epochs=100, full_epochs=200
         avg_epoch_loss = epoch_loss_stage1 / num_seq_processed if num_seq_processed > 0 else 0.0
         print(f"Pretraining Epoch {epoch + 1}/{pretraining_epochs}, Avg Loss: {avg_epoch_loss:.4f}")
 
-
     # full model training:
     for epoch in tqdm(range(full_epochs), desc="Training Full Model", miniters=10):
         full_model.train()
@@ -99,13 +98,32 @@ def train_model(train_set, batch_size=1, pretraining_epochs=100, full_epochs=200
             v = torch.cat((f, B_flat), dim=1)
             v_norm = F.normalize(v, p=2, dim=1)
             
-            x_recostructed = reconstruct_x(seq_x, B) # (P, F, 2)
-            x_recostructed_permuted = x_recostructed.permute(0, 2, 1)
+            if use_sequence_randomization:
+                torch.manual_seed(42 + epoch)
+                seq_x_train = torch.empty_like(seq_x)
+                
+                if torch.rand(1) > 0.5:
+                    unique_labels = torch.unique(seq_labels)
+                    for label in unique_labels:
+                        class_indices = (seq_labels == label)
+                        seq_class = seq_x[class_indices]
+                        num_seq_class = seq_class.size(0)
+                        idx = torch.randperm(num_seq_class, device=device)
+                        seq_class_shuffled = seq_class[idx]
+                        seq_x_train[class_indices] = seq_class_shuffled
+                else:
+                    seq_x_train = seq_x
+            else:
+                seq_x_train = seq_x
+                
+            x_reconstructed = reconstruct_x(seq_x_train, B) # (P, F, 2)
+            x_reconstructed_permuted = x_reconstructed.permute(0, 2, 1)
             
+            loss_residual = L_Residual(x_original=seq_x_train, x_reconstructed=x_reconstructed)
+            
+            f_reconstructed = full_model.feature_extractor(x_reconstructed_permuted)
             loss_infoNCE = L_InfoNCE(v_norm, seq_labels)
-            loss_residual = L_Residual(x_original=seq_x, x_reconstructed=x_recostructed)
-            
-            f_reconstructed = full_model.feature_extractor(x_recostructed_permuted)
+
             if include_ortho_loss:
                 loss_ortho = L_orthogonal(h_t)
             else:
@@ -124,9 +142,9 @@ def train_model(train_set, batch_size=1, pretraining_epochs=100, full_epochs=200
             w_info_sum += w_info * loss_infoNCE
             w_res_sum += w_res * loss_residual
             w_feat_sum += w_feat * loss_featdiff
-            w_ortho_sum += w_ortho*loss_ortho
+            w_ortho_sum += w_ortho * loss_ortho
             
-            total_loss = (w_info * loss_infoNCE + w_res * loss_residual + w_feat * loss_featdiff + w_ortho*loss_ortho)
+            total_loss = (w_info * loss_infoNCE + w_res * loss_residual + w_feat * loss_featdiff + w_ortho * loss_ortho)
             total_loss.backward()
             optimizer_stage2.step()
             epoch_loss_stage2 += total_loss.item()
@@ -157,11 +175,12 @@ def load_dataset(dataset_name):
         raise ValueError(f"Unknown dataset: {dataset_name}")
 
 def train_different_model_configurations():
-    data_set_name = 'Hopkins12'
+    data_set_name = 'KT3DMoSeg'
     train_dataset = load_dataset(data_set_name)
-    pretraining_epochs = 50
-    full_epochs = 100
+    pretraining_epochs = 100
+    full_epochs = 200
     train_on_full_dataset = False
+    use_sequence_randomization = False
     train_set = None
     val_set = None
 
@@ -174,25 +193,19 @@ def train_different_model_configurations():
         val_set = torch.utils.data.Subset(train_dataset, val_ids)   
 
     configurations = [
-        {"incfeat": True, "ortho": True, "alph0": True},
-        {"incfeat": True, "ortho": True, "alph0": False},
-        {"incfeat": True, "ortho": False, "alph0": True},
         {"incfeat": True, "ortho": False, "alph0": False},
-        {"incfeat": False, "ortho": True, "alph0": True},
-        {"incfeat": False, "ortho": True, "alph0": False},
-        {"incfeat": False, "ortho": False, "alph0": True},
-        {"incfeat": False, "ortho": False, "alph0": False},
     ]
 
     for config in configurations:
-        print(f"Training with config: {config}")
+        print(f"Training with config: {config}, sequence_randomization: {use_sequence_randomization}")
         trained_model = train_model(
             train_set=train_set,
             pretraining_epochs=pretraining_epochs,
             full_epochs=full_epochs,
             alph0=config["alph0"],
             include_ortho_loss=config["ortho"],
-            include_feat_loss=config["incfeat"]
+            include_feat_loss=config["incfeat"],
+            use_sequence_randomization=use_sequence_randomization
         )
         
         if trained_model:   
@@ -206,13 +219,13 @@ def train_different_model_configurations():
             eval_model(model=trained_model, val_set=val_set)
 
         pytorch_save_path = generate_model_filename(
-            data_set_name, pretraining_epochs, full_epochs, config, train_on_full_dataset
+            data_set_name, pretraining_epochs, full_epochs, config, train_on_full_dataset, use_sequence_randomization
         )
         print(f"Saving model state_dict to {pytorch_save_path}...")
         torch.save(trained_model.state_dict(), pytorch_save_path)
         print("Saved.")
 
-def generate_model_filename(dataset_name, pretraining_epochs, full_epochs, config, train_on_full_dataset):
+def generate_model_filename(dataset_name, pretraining_epochs, full_epochs, config, train_on_full_dataset, use_sequence_randomization=False):
     dataset_mapping = {
         'Hopkins155': 'hopk155',
         'Hopkins12': 'hopk12',
@@ -232,6 +245,9 @@ def generate_model_filename(dataset_name, pretraining_epochs, full_epochs, confi
     if config["alph0"]:
         parts.append("alph0")
     
+    if use_sequence_randomization:
+        parts.append("seqrand")
+    
     return f'out/models/{"_".join(parts)}.pt'
 
 def main():
@@ -246,9 +262,18 @@ def main():
     alph0 = False
     include_ortho_loss = False
     include_feat_loss = True
-    print(f"Training model on {dataset_name} with alph0={alph0}, include_ortho_loss={include_ortho_loss}, include_feat_loss={include_feat_loss}")
+    use_sequence_randomization = False
+    
+    print(f"Training model on {dataset_name} with alph0={alph0}, include_ortho_loss={include_ortho_loss}, include_feat_loss={include_feat_loss}, use_sequence_randomization={use_sequence_randomization}")
 
-    trained_model = train_model(train_set=train_set, alph0=alph0, include_ortho_loss=include_ortho_loss, include_feat_loss=include_feat_loss)
+    trained_model = train_model(
+        train_set=train_set, 
+        alph0=alph0, 
+        include_ortho_loss=include_ortho_loss, 
+        include_feat_loss=include_feat_loss,
+        use_sequence_randomization=use_sequence_randomization
+    )
+    
     if trained_model:
         print("Model training complete.")
     else:
@@ -261,7 +286,8 @@ def main():
         pretraining_epochs=100,
         full_epochs=200,
         config={"incfeat": include_feat_loss, "ortho": include_ortho_loss, "alph0": alph0},
-        train_on_full_dataset=False
+        train_on_full_dataset=False,
+        use_sequence_randomization=use_sequence_randomization
     )
     
     pytorch_save_path = f'{model_filename}'
