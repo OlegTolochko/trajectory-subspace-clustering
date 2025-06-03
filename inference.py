@@ -6,12 +6,13 @@ from sklearn.cluster import AgglomerativeClustering, KMeans, SpectralClustering
 from sklearn.metrics.cluster import contingency_matrix
 from sklearn.metrics import normalized_mutual_info_score, adjusted_mutual_info_score
 from scipy.optimize import linear_sum_assignment
+from sklearn.model_selection import train_test_split
 import numpy as np
 
 
 def load_model():    
     model = TrajectoryEmbeddingModel()
-    load_path = 'out/models/hopk155_100_200_ortho.pt'
+    load_path = 'out/models/hopk155_100_200_split_incfeat_ortho_alph0.pt'
 
     target_device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     state_dict = torch.load(load_path, map_location=target_device)
@@ -38,9 +39,18 @@ def calculate_clustering_error(labels_true, labels_pred):
     error_rate = 1.0 - accuracy
     return error_rate
 
-def load_trajectory_data():
+def load_trajectory_data(val_split=False):
     dataset = Hopkins155()
-    loaded_data = torch.utils.data.DataLoader(dataset, batch_size=1,)
+    val_set = None
+    if val_split:
+        seq_ids = list(range(len(dataset)))
+        train_ids, val_ids = train_test_split(seq_ids, test_size=0.2, random_state=42, shuffle=True)
+        train_set = torch.utils.data.Subset(dataset, train_ids)
+        val_set = torch.utils.data.Subset(dataset, val_ids)   
+    else:
+        val_set = dataset
+        
+    loaded_data = torch.utils.data.DataLoader(val_set, batch_size=1)
     return loaded_data
 
 def evaluate_model_performance(model, data, cluster_algo_name='hierarchical', device_str='cpu'):
@@ -111,7 +121,7 @@ def compare_all_clustering_methods(model, data):
 
 def main():
     model = load_model()
-    data = load_trajectory_data()
+    data = load_trajectory_data(val_split=True)
     error_rate = compare_all_clustering_methods(model, data)
 
 if __name__ == '__main__':
