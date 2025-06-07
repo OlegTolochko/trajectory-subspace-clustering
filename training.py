@@ -1,9 +1,11 @@
+from datetime import datetime
+import os
+
 import torch
 import torch.optim as optim
 from torch.utils.data import DataLoader
 import torch.nn.functional as F
 from torch.optim.lr_scheduler import ExponentialLR
-import numpy as np
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 import wandb
@@ -11,31 +13,20 @@ import wandb
 from models.trajectory_embedder import TrajectoryEmbeddingModel
 from losses import L_FeatDiff, L_InfoNCE, L_Residual, L_orthogonal
 from datasets import Hopkins155, KT3DMoSeg, Hopkins12
-from inference import compare_all_clustering_methods
+from inference import evaluate_model_performance
 
 
-def reconstruct_x(x_original, B_estimated):
-    with torch.no_grad():
-        try:
-            batch_size, seq_len, _ = x_original.shape
-            x_flattend = x_original.reshape(batch_size, 2 * seq_len, 1)
-            solution = torch.linalg.lstsq(B_estimated, x_flattend)
-            c = solution.solution
-
-            x_reconst_flat = torch.bmm(B_estimated, c)
-            x_reconst = x_reconst_flat.reshape(batch_size, seq_len, 2)
-        except Exception as e:
-            print(f"Error occurred in x reconstruction: {e}")
-    return x_reconst
-
-
-def train_model(config):
+def train_model(config, model_save_path="./out/models/"):
+    dataset = load_dataset(config["train_data"])
+    train_loader, val_loader = get_train_val_loaders(
+        dataset, config["validation_split"], config["batch_size"]
+    )
+    
     device = torch.device(config["device"])
 
     model = TrajectoryEmbeddingModel(alph0=config["alph0"])
     model = model.to(device)
-
-    train_set = load_dataset(config["train_data"])
+    
     optimizer_stage1 = optim.Adam(
         model.feature_extractor.parameters(),
         lr=config["learning_rate"],
@@ -46,19 +37,10 @@ def train_model(config):
         lr=config["learning_rate"],
         weight_decay=config["weight_decay"],
     )
-    scheduler_stage1 = ExponentialLR(optimizer_stage1, gamma=config["gamma"])
-    scheduler_stage2 = ExponentialLR(optimizer_stage2, gamma=config["gamma"])
+    scheduler_stage1 = ExponentialLR(optimizer_stage1, gamma=config["scheduler_gamma"])
+    scheduler_stage2 = ExponentialLR(optimizer_stage2, gamma=config["scheduler_gamma"])
 
     torch.backends.cudnn.benchmark = True
-
-    train_loader = DataLoader(
-        train_set,
-        batch_size=1,
-        shuffle=True,
-        num_workers=4,
-        pin_memory=True,
-        persistent_workers=True,
-    )
 
     metrics_to_log = {
         "total_loss": 0,
@@ -66,6 +48,7 @@ def train_model(config):
         "residual_loss": 0,
         "feat_diff_loss": 0,
         "ortho_loss": 0,
+        "mean_clustering_error": 0
     }
 
     pretrained_model = pretraining_loop(
@@ -75,25 +58,37 @@ def train_model(config):
         device=device,
         optimizer=optimizer_stage1,
         scheduler=scheduler_stage1,
-        metrics=metrics_to_log,
     )
+    
+    pretrained_model = pretrained_model.to(device)
+    
     fully_trained_model = full_training_loop(
         config=config,
         model=pretrained_model,
         train_loader=train_loader,
+        val_loader=val_loader,
         device=device,
         optimizer=optimizer_stage2,
         scheduler=scheduler_stage2,
         metrics=metrics_to_log,
     )
 
+    timestamp = datetime.now().strftime("%Y%m%dT%H%M%S")
+    wandb_id = wandb.run.id
+    model_save_path = os.path.join(
+        model_save_path, f"{config['model_name']}-{timestamp}-{wandb_id}.pth"
+    )
+    torch.save(fully_trained_model.state_dict(), model_save_path)
+    print(f"Saved the model to {model_save_path}.")
+
     return fully_trained_model
 
 
 def pretraining_loop(
-    config, model, train_loader, device, optimizer, scheduler, metrics
+    config, model, train_loader, device, optimizer, scheduler
 ):
     for epoch in tqdm(range(config["pretraining_epochs"]), desc="Pretraining Model"):
+        model = model.to(device)
         epoch_loss_stage1 = 0.0
         num_seq_processed = 0
         model.feature_extractor.train()
@@ -119,26 +114,23 @@ def pretraining_loop(
 
         scheduler.step()
 
-        metrics["infonce_loss"] = (
-            epoch_loss_stage1 / num_seq_processed if num_seq_processed > 0 else 0.0
-        )
-
-        wandb.log(metrics, step=epoch + 1)
+        avg_loss = epoch_loss_stage1 / num_seq_processed if num_seq_processed > 0 else 0.0
 
         print(
-            f"Pretraining Epoch {epoch + 1}/{config['pretraining_epochs']}, Avg Loss: {metrics['infonce_loss']:.4f}"
+            f"Pretraining Epoch {epoch + 1}/{config['pretraining_epochs']}, Avg Loss: {avg_loss:.4f}"
         )
 
     return model
 
 
 def full_training_loop(
-    config, model, train_loader, device, optimizer, scheduler, metrics
+    config, model, train_loader, val_loader, device, optimizer, scheduler, metrics
 ):
     for epoch in tqdm(
-        range(config["full_epochs"]), desc="Training Full Model", miniters=10
+        range(config["full_epochs"]), desc="Training Full Model"
     ):
         model.train()
+        model = model.to(device)
         epoch_loss_stage2 = 0.0
         num_seq_processed = 0
         w_info_sum = 0.0
@@ -215,6 +207,7 @@ def full_training_loop(
         metrics["residual_loss"] = w_res_sum / num_seq_processed
         metrics["feat_diff_loss"] = w_feat_sum / num_seq_processed
         metrics["ortho_loss"] = w_ortho_sum / num_seq_processed
+        metrics["mean_clustering_error"] = evaluate_model_performance(model, val_loader)
 
         wandb.log(metrics, step=epoch + 1)
 
@@ -226,6 +219,21 @@ def full_training_loop(
         )
 
     return model
+
+
+def reconstruct_x(x_original, B_estimated):
+    with torch.no_grad():
+        try:
+            batch_size, seq_len, _ = x_original.shape
+            x_flattend = x_original.reshape(batch_size, 2 * seq_len, 1)
+            solution = torch.linalg.lstsq(B_estimated, x_flattend)
+            c = solution.solution
+
+            x_reconst_flat = torch.bmm(B_estimated, c)
+            x_reconst = x_reconst_flat.reshape(batch_size, seq_len, 2)
+        except Exception as e:
+            print(f"Error occurred in x reconstruction: {e}")
+    return x_reconst
 
 
 def randomize_sequences_for_class(seq_x, seq_labels, epoch, device):
@@ -247,10 +255,6 @@ def randomize_sequences_for_class(seq_x, seq_labels, epoch, device):
     return seq_x_train
 
 
-def eval_model(model, val_set):
-    compare_all_clustering_methods(model=model, data=val_set)
-
-
 def load_dataset(dataset_name):
     if dataset_name == "Hopkins155":
         return Hopkins155()
@@ -260,3 +264,13 @@ def load_dataset(dataset_name):
         return Hopkins12()
     else:
         raise ValueError(f"Unknown dataset: {dataset_name}")
+
+
+def get_train_val_loaders(dataset, validation_split, batch_size):
+    train_data, val_data = train_test_split(
+        dataset, test_size=validation_split, random_state=42
+    )
+    train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(val_data, batch_size=batch_size, shuffle=True)
+
+    return train_loader, val_loader

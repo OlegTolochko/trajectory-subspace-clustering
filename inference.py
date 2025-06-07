@@ -84,23 +84,23 @@ def evaluate_model_performance(
             B_flat = B.view(B.size(0), -1)
             v = torch.cat((f, B_flat), dim=1)
             v = torch.nn.functional.normalize(v, p=2, dim=1)
-            feats_np = v.cpu().numpy()
+            v_feats_np = v.cpu().numpy()
 
             predicted_labels = None
             if cluster_algo_name == "hierarchical":
                 clusters = AgglomerativeClustering(
                     n_clusters=k, linkage="ward", compute_distances=False
                 )
-                predicted_labels = clusters.fit_predict(feats_np)
+                predicted_labels = clusters.fit_predict(v_feats_np)
             elif cluster_algo_name == "kmeans":
                 clusters = KMeans(n_clusters=k, random_state=0, n_init=10)
-                predicted_labels = clusters.fit_predict(feats_np)
+                predicted_labels = clusters.fit_predict(v_feats_np)
             elif cluster_algo_name == "spectral":
                 # tested options: 'rbf', 'nearest_neighbor'; possibly worth experminenting with different hyp. params here
                 clusters = SpectralClustering(
                     n_clusters=k, random_state=0, affinity="rbf", n_neighbors=20
                 )
-                predicted_labels = clusters.fit_predict(feats_np)
+                predicted_labels = clusters.fit_predict(v_feats_np)
             else:
                 print(f"Error: Unknown clustering algorithm '{cluster_algo_name}'")
                 continue
