@@ -224,3 +224,28 @@ class KT3DMoSeg(Dataset):
             "name": seq_name,
             "num_clusters": num_clusters,
         }
+
+
+def augment_normalized_data(seq_x, shifted_percent=0.1):
+    seq_x_shifted = shift_seq(seq_x=seq_x, shifted_percent=shifted_percent)
+    return seq_x_shifted
+
+
+def shift_seq(seq_x, max_shift_amount=0.1, shifted_percent=0.1):
+    seq_x_shifted = seq_x.clone()
+    
+    num_points = seq_x.shape[0]
+    
+    shift_mask = torch.rand(num_points, device=seq_x.device) < shifted_percent
+    num_points_to_shift = torch.sum(shift_mask).item()
+    
+    if num_points_to_shift > 0:
+        shifts = torch.empty((num_points_to_shift, seq_x.shape[1], seq_x.shape[2]), 
+                           device=seq_x.device, dtype=seq_x.dtype)
+        shifts.uniform_(-max_shift_amount, max_shift_amount)
+        
+        seq_x_shifted[shift_mask] += shifts
+        
+        seq_x_shifted = torch.clamp(seq_x_shifted, 0, 1)
+    
+    return seq_x_shifted

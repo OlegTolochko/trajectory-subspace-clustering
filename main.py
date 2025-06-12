@@ -15,6 +15,7 @@ TRAIN_CONFIG = {
     "weight_decay": 1e-5,
     "scheduler_gamma": 0.999,
     "batch_size": 1,
+    "validation_split": 0.2,
     "train_data": "Hopkins155",  # Options: Hopkins155, Hopkins12, KT3DMoSeg
     "device": "cuda",  # Options: cuda, cpu, mps
     "alph0": False,  # zero-out first part of basis-function term
@@ -25,6 +26,7 @@ TRAIN_CONFIG = {
     "w_res": 1.0,  # weight for residual loss
     "w_feat": 1.0,  # weight for feature difference loss
     "w_ortho": 0.01,  # weight for orthogonality loss
+    "augmentation_shift": 0.0 # random point shifting, range 0-1, 0 = no augmetation
 }
 
 

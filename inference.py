@@ -59,7 +59,7 @@ def load_trajectory_data(val_split=False):
 
 
 def evaluate_model_performance(
-    model, data, cluster_algo_name="hierarchical", device_str="cpu"
+    model, data, cluster_algo_name="hierarchical", device_str="cuda"
 ):
     individual_error_rates = []
     if isinstance(device_str, torch.device):

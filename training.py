@@ -1,5 +1,6 @@
 from datetime import datetime
 import os
+import copy
 
 import torch
 import torch.optim as optim
@@ -12,7 +13,7 @@ import wandb
 
 from models.trajectory_embedder import TrajectoryEmbeddingModel
 from losses import L_FeatDiff, L_InfoNCE, L_Residual, L_orthogonal
-from datasets import Hopkins155, KT3DMoSeg, Hopkins12
+from datasets import Hopkins155, KT3DMoSeg, Hopkins12, shift_seq
 from inference import evaluate_model_performance
 
 
@@ -96,6 +97,9 @@ def pretraining_loop(
         for batch_data in train_loader:
             seq_x = batch_data["trajectories"].to(device).squeeze(0)
             seq_labels = batch_data["labels"].to(device).squeeze(0)
+            if config["augmentation_shift"] != 0.0:
+                seq_x = shift_seq(seq_x=seq_x, max_shift_amount=config["augmentation_shift"])
+            
             num_points = seq_x.shape[0]
             if num_points <= 1:
                 continue
@@ -126,6 +130,8 @@ def pretraining_loop(
 def full_training_loop(
     config, model, train_loader, val_loader, device, optimizer, scheduler, metrics
 ):
+    best_model_weights = None
+    best_mean_clustering_error = 1 # 1 represents 100% mean clustering error
     for epoch in tqdm(
         range(config["full_epochs"]), desc="Training Full Model"
     ):
@@ -208,6 +214,9 @@ def full_training_loop(
         metrics["feat_diff_loss"] = w_feat_sum / num_seq_processed
         metrics["ortho_loss"] = w_ortho_sum / num_seq_processed
         metrics["mean_clustering_error"] = evaluate_model_performance(model, val_loader)
+        
+        if metrics["mean_clustering_error"] < best_mean_clustering_error:
+            best_model_weights = copy.deepcopy(model.state_dict())
 
         wandb.log(metrics, step=epoch + 1)
 
@@ -218,6 +227,7 @@ def full_training_loop(
             f"Epoch {epoch + 1}/{config['full_epochs']}: InfoNCE Loss: {metrics['infonce_loss']:.4f}, Res Loss: {metrics['residual_loss']:.4f}, Feat Loss: {metrics['feat_diff_loss']:.4f}, Ortho Loss: {metrics['ortho_loss']:.4f}"
         )
 
+    model.load_state_dict(best_model_weights)
     return model
 
 
@@ -237,22 +247,24 @@ def reconstruct_x(x_original, B_estimated):
 
 
 def randomize_sequences_for_class(seq_x, seq_labels, epoch, device):
-    torch.manual_seed(42 + epoch)
-    seq_x_train = torch.empty_like(seq_x)
+    generator = torch.Generator(device=device)
+    generator.manual_seed(42 + epoch)
+    
+    seq_x_train = seq_x.clone()
 
-    if torch.rand(1) > 0.5:
+    if torch.rand(1, generator=generator, device=device) > 0.5:
         unique_labels = torch.unique(seq_labels)
         for label in unique_labels:
             class_indices = seq_labels == label
-            seq_class = seq_x[class_indices]
-            num_seq_class = seq_class.size(0)
-            idx = torch.randperm(num_seq_class, device=device)
-            seq_class_shuffled = seq_class[idx]
-            seq_x_train[class_indices] = seq_class_shuffled
-    else:
-        seq_x_train = seq_x
+            if class_indices.sum() > 1:
+                seq_class = seq_x[class_indices]
+                num_seq_class = seq_class.size(0)
+                idx = torch.randperm(num_seq_class, generator=generator, device=device)
+                seq_class_shuffled = seq_class[idx]
+                seq_x_train[class_indices] = seq_class_shuffled
 
     return seq_x_train
+
 
 
 def load_dataset(dataset_name):
