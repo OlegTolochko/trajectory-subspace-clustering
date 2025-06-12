@@ -1,0 +1,18 @@
+[project]
+name = "trajectory-subspace-clustering"
+version = "0.1.0"
+description = "Implementation of the Paper 'Learned Trajectory Embedding for Subspace Clustering' from Yaroslava Lochman"
+readme = "README.md"
+requires-python = ">=3.12.8"
+dependencies = [
+    "matplotlib>=3.10.3",
+    "numpy>=2.2.6",
+    "ruff>=0.11.13",
+    "scikit-learn>=1.7.0",
+    "scipy>=1.15.3",
+    "seaborn>=0.13.2",
+    "torch>=2.7.1",
+    "tqdm>=4.67.1",
+    "typer>=0.16.0",
+    "wandb>=0.20.1",
+]
