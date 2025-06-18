@@ -13,21 +13,45 @@ import wandb
 
 from models.trajectory_embedder import TrajectoryEmbeddingModel
 from losses import L_FeatDiff, L_InfoNCE, L_Residual, L_orthogonal
-from datasets import Hopkins155, KT3DMoSeg, Hopkins12, shift_seq
+from datasets import (
+    Hopkins155,
+    KT3DMoSeg,
+    Hopkins12,
+    shift_seq,
+    augment_normalized_data,
+)
 from inference import evaluate_model_performance
 
 
 def train_model(config, model_save_path="./out/models/"):
-    dataset = load_dataset(config["train_data"])
-    train_loader, val_loader = get_train_val_loaders(
-        dataset, config["validation_split"], config["batch_size"]
+    metrics_to_log = {
+        "total_loss": 0,
+        "infonce_loss": 0,
+        "residual_loss": 0,
+        "feat_diff_loss": 0,
+        "ortho_loss": 0,
+        f"mean_clustering_error": 0,
+    }
+
+    main_dataset = load_dataset(config["train_data"])
+    main_train_loader, main_val_loader = get_train_val_loaders(
+        main_dataset, config["validation_split"], config["batch_size"]
     )
-    
+    additional_val_loader = None
+    if config["additional_val_data"]:
+        metrics_to_log.update(
+            {f"{str.lower(config['additional_val_data'])}_mean_clustering_error": 0}
+        )
+        additional_val_dataset = load_dataset(config["additional_val_data"])
+        additional_val_loader = DataLoader(
+            additional_val_dataset, batch_size=config["batch_size"], shuffle=True
+        )
+
     device = torch.device(config["device"])
 
     model = TrajectoryEmbeddingModel(alph0=config["alph0"])
     model = model.to(device)
-    
+
     optimizer_stage1 = optim.Adam(
         model.feature_extractor.parameters(),
         lr=config["learning_rate"],
@@ -43,31 +67,23 @@ def train_model(config, model_save_path="./out/models/"):
 
     torch.backends.cudnn.benchmark = True
 
-    metrics_to_log = {
-        "total_loss": 0,
-        "infonce_loss": 0,
-        "residual_loss": 0,
-        "feat_diff_loss": 0,
-        "ortho_loss": 0,
-        "mean_clustering_error": 0
-    }
-
     pretrained_model = pretraining_loop(
         config=config,
         model=model,
-        train_loader=train_loader,
+        train_loader=main_train_loader,
         device=device,
         optimizer=optimizer_stage1,
         scheduler=scheduler_stage1,
     )
-    
+
     pretrained_model = pretrained_model.to(device)
-    
+
     fully_trained_model = full_training_loop(
         config=config,
         model=pretrained_model,
-        train_loader=train_loader,
-        val_loader=val_loader,
+        train_loader=main_train_loader,
+        val_loader=main_val_loader,
+        additional_val_loader=additional_val_loader,
         device=device,
         optimizer=optimizer_stage2,
         scheduler=scheduler_stage2,
@@ -85,9 +101,7 @@ def train_model(config, model_save_path="./out/models/"):
     return fully_trained_model
 
 
-def pretraining_loop(
-    config, model, train_loader, device, optimizer, scheduler
-):
+def pretraining_loop(config, model, train_loader, device, optimizer, scheduler):
     for epoch in tqdm(range(config["pretraining_epochs"]), desc="Pretraining Model"):
         model = model.to(device)
         epoch_loss_stage1 = 0.0
@@ -97,9 +111,18 @@ def pretraining_loop(
         for batch_data in train_loader:
             seq_x = batch_data["trajectories"].to(device).squeeze(0)
             seq_labels = batch_data["labels"].to(device).squeeze(0)
-            if config["augmentation_shift"] != 0.0:
-                seq_x = shift_seq(seq_x=seq_x, max_shift_amount=config["augmentation_shift"])
-            
+            if (
+                config["augmentation_max_shift_amount"] != 0.0
+                or config["augmentation_shift_percent"] != 0.0
+                or config["augmentation_occlusion_percent"] != 0
+            ):
+                seq_x = augment_normalized_data(
+                    seq_x=seq_x,
+                    max_shift_amount=config["augmentation_max_shift_amount"],
+                    shift_percent=config["augmentation_shift_percent"],
+                    occlusion_percent=config["augmentation_occlusion_percent"],
+                )
+
             num_points = seq_x.shape[0]
             if num_points <= 1:
                 continue
@@ -118,7 +141,9 @@ def pretraining_loop(
 
         scheduler.step()
 
-        avg_loss = epoch_loss_stage1 / num_seq_processed if num_seq_processed > 0 else 0.0
+        avg_loss = (
+            epoch_loss_stage1 / num_seq_processed if num_seq_processed > 0 else 0.0
+        )
 
         print(
             f"Pretraining Epoch {epoch + 1}/{config['pretraining_epochs']}, Avg Loss: {avg_loss:.4f}"
@@ -128,13 +153,19 @@ def pretraining_loop(
 
 
 def full_training_loop(
-    config, model, train_loader, val_loader, device, optimizer, scheduler, metrics
+    config,
+    model,
+    train_loader,
+    val_loader,
+    additional_val_loader,
+    device,
+    optimizer,
+    scheduler,
+    metrics,
 ):
     best_model_weights = None
-    best_mean_clustering_error = 1 # 1 represents 100% mean clustering error
-    for epoch in tqdm(
-        range(config["full_epochs"]), desc="Training Full Model"
-    ):
+    best_mean_clustering_error = 1  # 1 represents 100% mean clustering error
+    for epoch in tqdm(range(config["full_epochs"]), desc="Training Full Model"):
         model.train()
         model = model.to(device)
         epoch_loss_stage2 = 0.0
@@ -148,6 +179,17 @@ def full_training_loop(
             seq_labels = batch_data["labels"].to(device).squeeze(0)  # (P,)
             seq_t = batch_data["times"].to(device).squeeze(0)  # (P, F)
             num_points = seq_x.shape[0]
+            if (
+                config["augmentation_max_shift_amount"] != 0.0
+                or config["augmentation_shift_percent"] != 0.0
+                or config["augmentation_occlusion_percent"] != 0
+            ):
+                seq_x = augment_normalized_data(
+                    seq_x=seq_x,
+                    max_shift_amount=config["augmentation_max_shift_amount"],
+                    shift_percent=config["augmentation_shift_percent"],
+                    occlusion_percent=config["augmentation_occlusion_percent"],
+                )
 
             optimizer.zero_grad()
             f, B, h_t = model(seq_x, seq_t)
@@ -214,7 +256,11 @@ def full_training_loop(
         metrics["feat_diff_loss"] = w_feat_sum / num_seq_processed
         metrics["ortho_loss"] = w_ortho_sum / num_seq_processed
         metrics["mean_clustering_error"] = evaluate_model_performance(model, val_loader)
-        
+        if additional_val_loader:
+            metrics[
+                f"{str.lower(config['additional_val_data'])}_mean_clustering_error"
+            ] = evaluate_model_performance(model, additional_val_loader)
+
         if metrics["mean_clustering_error"] < best_mean_clustering_error:
             best_model_weights = copy.deepcopy(model.state_dict())
 
@@ -249,7 +295,7 @@ def reconstruct_x(x_original, B_estimated):
 def randomize_sequences_for_class(seq_x, seq_labels, epoch, device):
     generator = torch.Generator(device=device)
     generator.manual_seed(42 + epoch)
-    
+
     seq_x_train = seq_x.clone()
 
     if torch.rand(1, generator=generator, device=device) > 0.5:
@@ -264,7 +310,6 @@ def randomize_sequences_for_class(seq_x, seq_labels, epoch, device):
                 seq_x_train[class_indices] = seq_class_shuffled
 
     return seq_x_train
-
 
 
 def load_dataset(dataset_name):

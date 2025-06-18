@@ -226,26 +226,71 @@ class KT3DMoSeg(Dataset):
         }
 
 
-def augment_normalized_data(seq_x, shifted_percent=0.1):
-    seq_x_shifted = shift_seq(seq_x=seq_x, shifted_percent=shifted_percent)
-    return seq_x_shifted
+def augment_normalized_data(
+    seq_x, max_shift_amount=0.1, shift_percent=0.1, occlusion_percent=0.1
+):
+    seq_augmented = seq_x
+    if max_shift_amount != 0 and shift_percent != 0:
+        seq_augmented = shift_seq(
+            seq_x=seq_x, max_shift_amount=max_shift_amount, shift_percent=shift_percent
+        )
+
+    if occlusion_percent != 0:
+        seq_augmented = occlude_seq(
+            seq_x=seq_augmented, occlusion_percent=occlusion_percent
+        )
+
+    return seq_augmented
 
 
-def shift_seq(seq_x, max_shift_amount=0.1, shifted_percent=0.1):
+def shift_seq(seq_x, max_shift_amount=0.1, shift_percent=0.1):
     seq_x_shifted = seq_x.clone()
-    
+
     num_points = seq_x.shape[0]
-    
-    shift_mask = torch.rand(num_points, device=seq_x.device) < shifted_percent
+
+    shift_mask = torch.rand(num_points, device=seq_x.device) < shift_percent
     num_points_to_shift = torch.sum(shift_mask).item()
-    
+
     if num_points_to_shift > 0:
-        shifts = torch.empty((num_points_to_shift, seq_x.shape[1], seq_x.shape[2]), 
-                           device=seq_x.device, dtype=seq_x.dtype)
+        shifts = torch.empty(
+            (num_points_to_shift, seq_x.shape[1], seq_x.shape[2]),
+            device=seq_x.device,
+            dtype=seq_x.dtype,
+        )
         shifts.uniform_(-max_shift_amount, max_shift_amount)
-        
+
         seq_x_shifted[shift_mask] += shifts
-        
+
         seq_x_shifted = torch.clamp(seq_x_shifted, 0, 1)
-    
+
     return seq_x_shifted
+
+
+def occlude_seq(seq_x, occlusion_percent):
+    seq_x_occluded = seq_x.clone()
+    num_points = seq_x.shape[0]
+    device = seq_x.device
+
+    occlusion_mask = torch.rand(num_points, device=device) < occlusion_percent
+
+    i = 0
+    while i < num_points:
+        if not occlusion_mask[i]:
+            i += 1
+            continue
+        start_idx = i
+
+        while i < num_points and occlusion_mask[i]:
+            i += 1
+        end_idx = i - 1
+        source_idx = start_idx - 1
+
+        if start_idx == 0:
+            if end_idx == num_points - 1:
+                continue
+            source_idx = end_idx + 1
+
+        replacement_tensor = seq_x[source_idx]
+        seq_x_occluded[start_idx : end_idx + 1] = replacement_tensor
+
+    return seq_x_occluded
