@@ -1,9 +1,13 @@
 def load_sweep_config(
-    method="bayes", optimize_loss_weights=False, optimize_loss_inclusion=False, use_shift_augmentation=True
+    method="bayes",
+    optimize_loss_weights=False,
+    optimize_loss_inclusion=False,
+    use_shift_augmentation=False,
+    occlude_points=False,
 ):
     sweep_config = {"method": method}
 
-    eval_metric = {"name": "mean_clustering_error", "goal": "minimize"}
+    eval_metric = {"name": "hopkins12_mean_clustering_error", "goal": "minimize"}
     parameters_dict = {
         "validation_split": {"values": [0.2]},
         "pretraining_epochs": {"values": [100]},
@@ -37,10 +41,16 @@ def load_sweep_config(
     if use_shift_augmentation:
         parameters_dict.update(
             {
-                "augmentation_shift": {"values": [0.0, 0.1, 0.2, 0.3]},
+                "augmentation_max_shift_amount": {"values": [0.1, 0.2, 0.3]},
+                "augmentation_shift_percent": {"values": [0.0, 0.1, 0.2, 0.3]},
             }
         )
-        
+
+    if occlude_points:
+        parameters_dict.update(
+            {"augmentation_occlusion_percent": {"values": [0.0, 0.1, 0.2, 0.3]}}
+        )
+
     sweep_config["metric"] = eval_metric
     sweep_config["parameters"] = parameters_dict
 

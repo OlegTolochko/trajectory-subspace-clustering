@@ -17,6 +17,7 @@ TRAIN_CONFIG = {
     "batch_size": 1,
     "validation_split": 0.2,
     "train_data": "Hopkins155",  # Options: Hopkins155, Hopkins12, KT3DMoSeg
+    "additional_val_data": "Hopkins12",  # Options: None, Hopkins155, Hopkins12, KT3DMoSeg
     "device": "cuda",  # Options: cuda, cpu, mps
     "alph0": False,  # zero-out first part of basis-function term
     "include_ortho_loss": False,  # include loss, that enforces orthogonality for basis vectors
@@ -26,7 +27,9 @@ TRAIN_CONFIG = {
     "w_res": 1.0,  # weight for residual loss
     "w_feat": 1.0,  # weight for feature difference loss
     "w_ortho": 0.01,  # weight for orthogonality loss
-    "augmentation_shift": 0.0 # random point shifting, range 0-1, 0 = no augmetation
+    "augmentation_max_shift_amount": 0.0,  # Maximum training data point shift amount, range 0-1, 0 = no augmetation
+    "augmentation_shift_percent": 0.0,  # Percentage of training data points to shift, range 0-1, 0 = no augmetation
+    "augmentation_occlusion_percent": 0.0,  # Percentage of training data points to occlude
 }
 
 
@@ -42,7 +45,7 @@ def train(sweep: bool = False):
 
 
 @app.command()
-def sweep(sweep_id: str = "", count: int = 20):
+def sweep(sweep_id: str = "", count: int = 25):
     sweep_config = load_sweep_config()
     if sweep_id == "":
         sweep_id = wandb.sweep(sweep_config, project="trajectory-subspace-clustering")
