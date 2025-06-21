@@ -1,5 +1,6 @@
 import torch
 import os
+import re
 import scipy
 from torch.utils.data import Dataset
 import numpy as np
@@ -32,10 +33,20 @@ class Hopkins155(Dataset):
 
                 if "s" in mat_data:
                     labels_load = mat_data["s"].reshape(-1)
-
+                    
+                pattern = r'_g(.+)$'
+                match = re.search(pattern, seq_name)
+                
+                if match:
+                    seq_type = match.group(1)
+                    seq_name = seq_name.rsplit('_g', 1)[0]
+                else:
+                    seq_type = "full"
+                
                 self.sequence_data.append(
                     {
-                        "name": seq_name,
+                        "seq_name": seq_name,
+                        "seq_type": seq_type,
                         "trajectories": trajectories.astype(np.float32),
                         "times": time_vectors,
                         "labels": labels_load.astype(np.int64),
@@ -57,8 +68,9 @@ class Hopkins155(Dataset):
         seq_info = self.sequence_data[idx]
         trajectories = seq_info["trajectories"]
         labels = seq_info["labels"]
-        seq_name = seq_info["name"]
+        seq_name = seq_info["seq_name"]
         time_vectors = seq_info["times"]
+        seq_type = seq_type["seq_type"]
 
         trajectories_tensor = torch.tensor(trajectories, dtype=torch.float32)
         labels_tensor = torch.tensor(labels, dtype=torch.long)
@@ -69,7 +81,8 @@ class Hopkins155(Dataset):
             "trajectories": trajectories_tensor,
             "labels": labels_tensor,
             "times": time_tensor,
-            "name": seq_name,
+            "seq_name": seq_name,
+            "seq_type": seq_type,
             "num_clusters": num_clusters,
         }
 

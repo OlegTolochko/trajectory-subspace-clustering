@@ -4,7 +4,7 @@ import copy
 
 import torch
 import torch.optim as optim
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 import torch.nn.functional as F
 from torch.optim.lr_scheduler import ExponentialLR
 from sklearn.model_selection import train_test_split
@@ -35,7 +35,7 @@ def train_model(config, model_save_path="./out/models/"):
 
     main_dataset = load_dataset(config["train_data"])
     main_train_loader, main_val_loader = get_train_val_loaders(
-        main_dataset, config["validation_split"], config["batch_size"]
+        main_dataset, config
     )
     additional_val_loader = None
     if config["additional_val_data"]:
@@ -323,11 +323,70 @@ def load_dataset(dataset_name):
         raise ValueError(f"Unknown dataset: {dataset_name}")
 
 
-def get_train_val_loaders(dataset, validation_split, batch_size):
-    train_data, val_data = train_test_split(
-        dataset, test_size=validation_split, random_state=42
+def get_train_val_loaders(dataset, config):
+    if config["strict_sequence_train_val_split"]:
+        full_sequences = []
+        sequences_by_name = {}
+        
+        for i in range(len(dataset)):
+            seq = dataset[i]
+            seq_name = seq["seq_name"]
+            seq_type = seq["seq_type"]
+            
+            if seq_name not in sequences_by_name:
+                sequences_by_name[seq_name] = []
+            sequences_by_name[seq_name].append(i)
+            
+            if seq_type == "full":
+                full_sequences.append(seq_name)
+        
+        train_seq_names, val_seq_names = train_test_split(
+            full_sequences, 
+            test_size=config["validation_split"], 
+            random_state=42
+        )
+        
+        train_indices = []
+        for seq_name in train_seq_names:
+            if config["include_partial_sequences_train"]:
+                train_indices.extend(sequences_by_name[seq_name])
+            else:
+                for idx in sequences_by_name[seq_name]:
+                    seq = dataset[idx]
+                    if seq["seq_type"] == "full":
+                        train_indices.append(idx)
+        
+        val_indices = []
+        for seq_name in val_seq_names:
+            if config["include_partial_sequences_val"]:
+                val_indices.extend(sequences_by_name[seq_name])
+            else:
+                for idx in sequences_by_name[seq_name]:
+                    seq = dataset[idx]
+                    if seq["seq_type"] == "full":
+                        val_indices.append(idx)
+        
+        train_dataset = Subset(dataset, train_indices)
+        val_dataset = Subset(dataset, val_indices)
+        
+    else:
+        train_dataset, val_dataset = train_test_split(
+            range(len(dataset)), 
+            test_size=config["validation_split"], 
+            random_state=42
+        )
+        train_dataset = Subset(dataset, train_dataset)
+        val_dataset = Subset(dataset, val_dataset)
+    
+    train_loader = DataLoader(
+        train_dataset, 
+        batch_size=config["batch_size"], 
+        shuffle=True
     )
-    train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(val_data, batch_size=batch_size, shuffle=True)
-
+    val_loader = DataLoader(
+        val_dataset, 
+        batch_size=config["batch_size"], 
+        shuffle=False
+    )
+    
     return train_loader, val_loader

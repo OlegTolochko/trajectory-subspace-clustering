@@ -16,6 +16,9 @@ TRAIN_CONFIG = {
     "scheduler_gamma": 0.999,
     "batch_size": 1,
     "validation_split": 0.2,
+    "include_partial_sequences_train": True, # Dataset also includes partial versions of sequences, True to include
+    "include_partial_sequences_val": False, 
+    "strict_sequence_train_val_split": True, # enforces, that associated partial sequences are not mixed between train and val data
     "train_data": "Hopkins155",  # Options: Hopkins155, Hopkins12, KT3DMoSeg
     "additional_val_data": "Hopkins12",  # Options: None, Hopkins155, Hopkins12, KT3DMoSeg
     "device": "cuda",  # Options: cuda, cpu, mps
