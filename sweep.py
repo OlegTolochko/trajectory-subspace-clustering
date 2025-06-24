@@ -1,17 +1,16 @@
 def load_sweep_config(
     method="bayes",
-    optimize_loss_weights=False,
-    optimize_loss_inclusion=False,
-    use_shift_augmentation=False,
-    occlude_points=False,
+    optimize_loss_weights=True,
+    use_shift_augmentation=True,
+    occlude_points=True,
 ):
     sweep_config = {"method": method}
 
-    eval_metric = {"name": "hopkins12_mean_clustering_error", "goal": "minimize"}
+    eval_metric = {"name": "mean_clustering_error", "goal": "minimize"}
     parameters_dict = {
         "validation_split": {"values": [0.2]},
-        "pretraining_epochs": {"values": [100]},
-        "full_epochs": {"values": [200]},
+        "pretraining_epochs": {"values": [30]},
+        "full_epochs": {"values": [60]},
         "learning_rate": {"values": [0.001]},
         "weight_decay": {"values": [1e-5]},
         "scheduler_gamma": {"values": [0.999]},
@@ -20,21 +19,10 @@ def load_sweep_config(
     if optimize_loss_weights:
         parameters_dict.update(
             {
-                "w_info": {"min": 0.1, "max": 1.0},
-                "w_res": {"min": 0.1, "max": 1.0},
-                "w_feat": {"min": 0.1, "max": 1.0},
-                "w_ortho": {
-                    "min": 0.005,
-                    "max": 0.05,
-                },
-            }
-        )
-
-    if optimize_loss_inclusion:
-        parameters_dict.update(
-            {
-                "include_ortho_loss": {"values": [True, False]},
-                "include_feat_loss": {"values": [True, False]},
+                "w_info": {"values": [0.0, 0.1, 0.25, 0.5, 0.75, 1.0]},
+                "w_res": {"values": [0.0, 0.1, 0.25, 0.5, 0.75, 1.0]},
+                "w_feat": {"values": [0.0, 0.1, 0.25, 0.5, 0.75, 1.0]},
+                "w_ortho": {"values": [0.0, 0.001, 0.005, 0.01, 0.025, 0.05]},
             }
         )
 
