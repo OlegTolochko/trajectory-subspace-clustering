@@ -214,18 +214,11 @@ def full_training_loop(
 
             f_reconstructed = model.feature_extractor(x_reconstructed_permuted)
             loss_infoNCE = L_InfoNCE(f, seq_labels)
+            loss_ortho = L_orthogonal(h_t)
 
-            if config["include_ortho_loss"]:
-                loss_ortho = L_orthogonal(h_t)
-            else:
-                loss_ortho = torch.tensor(0.0, device=device)
-
-            if config["include_feat_loss"]:
-                loss_featdiff = L_FeatDiff(
-                    f_original=f, f_reconstructed=f_reconstructed
-                )
-            else:
-                loss_featdiff = torch.tensor(0.0, device=device)
+            loss_featdiff = L_FeatDiff(
+                f_original=f, f_reconstructed=f_reconstructed
+            )
 
             w_info = config["w_info"]
             w_res = config["w_res"]

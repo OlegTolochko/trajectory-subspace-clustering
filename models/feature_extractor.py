@@ -7,13 +7,17 @@ class FeatureExtractor(nn.Module):
     def __init__(self):
         super(FeatureExtractor, self).__init__()
         self.conv_layers = nn.Sequential(
-            nn.Conv1d(in_channels=2, out_channels=64, kernel_size=3, stride=1, padding=1),
+            nn.Conv1d(
+                in_channels=2, out_channels=64, kernel_size=3, stride=1, padding=1
+            ),
             nn.ReLU(),
-            
-            nn.Conv1d(in_channels=64, out_channels=128, kernel_size=3, stride=1, padding=1),
+            nn.Conv1d(
+                in_channels=64, out_channels=128, kernel_size=3, stride=1, padding=1
+            ),
             nn.ReLU(),
-            
-            nn.Conv1d(in_channels=128, out_channels=512, kernel_size=3, stride=1, padding=1),
+            nn.Conv1d(
+                in_channels=128, out_channels=512, kernel_size=3, stride=1, padding=1
+            ),
             nn.ReLU(),
         )
 

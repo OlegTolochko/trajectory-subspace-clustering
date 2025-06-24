@@ -25,8 +25,6 @@ TRAIN_CONFIG = {
     "generate_video_from_last_val_run": True,  # Generates video of point clusters on top of original video in last val run
     "device": "cuda",  # Options: cuda, cpu, mps
     "alph0": False,  # zero-out first part of basis-function term
-    "include_ortho_loss": False,  # include loss, that enforces orthogonality for basis vectors
-    "include_feat_loss": True,  # include loss, that compares original trajectories w. reconstructed
     "use_sequence_randomization": False,  # randomize sequences for a class to enforce reconstruction of an. sequence
     "w_info": 1.0,  # weight for InfoNCE loss
     "w_res": 1.0,  # weight for residual loss
