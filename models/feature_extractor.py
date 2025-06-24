@@ -6,13 +6,18 @@ import torch.nn.functional as F
 class FeatureExtractor(nn.Module):
     def __init__(self):
         super(FeatureExtractor, self).__init__()
-        # reduces spatial dimension F by 6, padding=1 could be thus considered, so no spatial reduction is performed
         self.conv_layers = nn.Sequential(
-            nn.Conv1d(in_channels=2, out_channels=64, kernel_size=3, stride=1),
+            nn.Conv1d(
+                in_channels=2, out_channels=64, kernel_size=3, stride=1, padding=1
+            ),
             nn.ReLU(),
-            nn.Conv1d(in_channels=64, out_channels=128, kernel_size=3, stride=1),
+            nn.Conv1d(
+                in_channels=64, out_channels=128, kernel_size=3, stride=1, padding=1
+            ),
             nn.ReLU(),
-            nn.Conv1d(in_channels=128, out_channels=512, kernel_size=3, stride=1),
+            nn.Conv1d(
+                in_channels=128, out_channels=512, kernel_size=3, stride=1, padding=1
+            ),
             nn.ReLU(),
         )
 

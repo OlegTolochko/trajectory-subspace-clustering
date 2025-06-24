@@ -4,22 +4,15 @@ import copy
 
 import torch
 import torch.optim as optim
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 import torch.nn.functional as F
 from torch.optim.lr_scheduler import ExponentialLR
-from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 import wandb
 
 from models.trajectory_embedder import TrajectoryEmbeddingModel
 from losses import L_FeatDiff, L_InfoNCE, L_Residual, L_orthogonal
-from datasets import (
-    Hopkins155,
-    KT3DMoSeg,
-    Hopkins12,
-    shift_seq,
-    augment_normalized_data,
-)
+from datasets import augment_normalized_data, load_dataset, get_train_val_loaders
 from inference import evaluate_model_performance
 
 
@@ -35,7 +28,11 @@ def train_model(config, model_save_path="./out/models/"):
 
     main_dataset = load_dataset(config["train_data"])
     main_train_loader, main_val_loader = get_train_val_loaders(
-        main_dataset, config["validation_split"], config["batch_size"]
+        main_dataset,
+        val_split_size=config["validation_split"],
+        strict_sequence_train_val_split=config["strict_sequence_train_val_split"],
+        include_partial_sequences_train=config["include_partial_sequences_train"],
+        include_partial_sequences_val=config["include_partial_sequences_val"],
     )
     additional_val_loader = None
     if config["additional_val_data"]:
@@ -78,6 +75,10 @@ def train_model(config, model_save_path="./out/models/"):
 
     pretrained_model = pretrained_model.to(device)
 
+    timestamp = datetime.now().strftime("%Y%m%dT%H%M%S")
+    wandb_id = wandb.run.id
+    model_name = f"{config['model_name']}-{timestamp}-{wandb_id}.pth"
+
     fully_trained_model = full_training_loop(
         config=config,
         model=pretrained_model,
@@ -88,13 +89,10 @@ def train_model(config, model_save_path="./out/models/"):
         optimizer=optimizer_stage2,
         scheduler=scheduler_stage2,
         metrics=metrics_to_log,
+        model_name=model_name,
     )
 
-    timestamp = datetime.now().strftime("%Y%m%dT%H%M%S")
-    wandb_id = wandb.run.id
-    model_save_path = os.path.join(
-        model_save_path, f"{config['model_name']}-{timestamp}-{wandb_id}.pth"
-    )
+    model_save_path = os.path.join(model_save_path, model_name)
     torch.save(fully_trained_model.state_dict(), model_save_path)
     print(f"Saved the model to {model_save_path}.")
 
@@ -133,6 +131,7 @@ def pretraining_loop(config, model, train_loader, device, optimizer, scheduler):
             # model input: (Batch=P, Channels=2, SeqLen=F)
             x_permuted = seq_x.permute(0, 2, 1)  # (P, 2, F)
             f = model.feature_extractor(x_permuted)
+
             loss = L_InfoNCE(f, seq_labels)
             loss.backward()
             optimizer.step()
@@ -162,6 +161,7 @@ def full_training_loop(
     optimizer,
     scheduler,
     metrics,
+    model_name,
 ):
     best_model_weights = None
     best_mean_clustering_error = 1  # 1 represents 100% mean clustering error
@@ -213,19 +213,12 @@ def full_training_loop(
             )
 
             f_reconstructed = model.feature_extractor(x_reconstructed_permuted)
-            loss_infoNCE = L_InfoNCE(v_norm, seq_labels)
+            loss_infoNCE = L_InfoNCE(f, seq_labels)
+            loss_ortho = L_orthogonal(h_t)
 
-            if config["include_ortho_loss"]:
-                loss_ortho = L_orthogonal(h_t)
-            else:
-                loss_ortho = torch.tensor(0.0, device=device)
-
-            if config["include_feat_loss"]:
-                loss_featdiff = L_FeatDiff(
-                    f_original=f, f_reconstructed=f_reconstructed
-                )
-            else:
-                loss_featdiff = torch.tensor(0.0, device=device)
+            loss_featdiff = L_FeatDiff(
+                f_original=f, f_reconstructed=f_reconstructed
+            )
 
             w_info = config["w_info"]
             w_res = config["w_res"]
@@ -255,11 +248,16 @@ def full_training_loop(
         metrics["residual_loss"] = w_res_sum / num_seq_processed
         metrics["feat_diff_loss"] = w_feat_sum / num_seq_processed
         metrics["ortho_loss"] = w_ortho_sum / num_seq_processed
-        metrics["mean_clustering_error"] = evaluate_model_performance(model, val_loader)
+
+        metrics["mean_clustering_error"] = evaluate_model_performance(
+            model, val_loader, config["train_data"], model_name=model_name
+        )
         if additional_val_loader:
             metrics[
                 f"{str.lower(config['additional_val_data'])}_mean_clustering_error"
-            ] = evaluate_model_performance(model, additional_val_loader)
+            ] = evaluate_model_performance(
+                model, additional_val_loader, config["additional_val_data"]
+            )
 
         if metrics["mean_clustering_error"] < best_mean_clustering_error:
             best_model_weights = copy.deepcopy(model.state_dict())
@@ -274,6 +272,13 @@ def full_training_loop(
         )
 
     model.load_state_dict(best_model_weights)
+    evaluate_model_performance(
+        model,
+        val_loader,
+        config["train_data"],
+        generate_video=config["generate_video_from_last_val_run"],
+        model_name=model_name,
+    )
     return model
 
 
@@ -310,24 +315,3 @@ def randomize_sequences_for_class(seq_x, seq_labels, epoch, device):
                 seq_x_train[class_indices] = seq_class_shuffled
 
     return seq_x_train
-
-
-def load_dataset(dataset_name):
-    if dataset_name == "Hopkins155":
-        return Hopkins155()
-    elif dataset_name == "KT3DMoSeg":
-        return KT3DMoSeg()
-    elif dataset_name == "Hopkins12":
-        return Hopkins12()
-    else:
-        raise ValueError(f"Unknown dataset: {dataset_name}")
-
-
-def get_train_val_loaders(dataset, validation_split, batch_size):
-    train_data, val_data = train_test_split(
-        dataset, test_size=validation_split, random_state=42
-    )
-    train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(val_data, batch_size=batch_size, shuffle=True)
-
-    return train_loader, val_loader

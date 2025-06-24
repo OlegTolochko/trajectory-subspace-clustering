@@ -3,25 +3,28 @@ import typer
 
 from training import train_model
 from sweep import load_sweep_config
+from inference import perform_inference
 
 app = typer.Typer()
 
 # base setup according to paper
 TRAIN_CONFIG = {
     "model_name": "model",
-    "pretraining_epochs": 100,
-    "full_epochs": 200,
+    "pretraining_epochs": 30,
+    "full_epochs": 60,
     "learning_rate": 0.001,
     "weight_decay": 1e-5,
     "scheduler_gamma": 0.999,
     "batch_size": 1,
     "validation_split": 0.2,
+    "include_partial_sequences_train": False,  # Dataset also includes partial versions of sequences, True to include
+    "include_partial_sequences_val": False,
+    "strict_sequence_train_val_split": True,  # enforces, that associated partial sequences are not mixed between train and val data
     "train_data": "Hopkins155",  # Options: Hopkins155, Hopkins12, KT3DMoSeg
-    "additional_val_data": "Hopkins12",  # Options: None, Hopkins155, Hopkins12, KT3DMoSeg
+    "additional_val_data": None,  # Options: None, Hopkins155, Hopkins12, KT3DMoSeg
+    "generate_video_from_last_val_run": True,  # Generates video of point clusters on top of original video in last val run
     "device": "cuda",  # Options: cuda, cpu, mps
     "alph0": False,  # zero-out first part of basis-function term
-    "include_ortho_loss": False,  # include loss, that enforces orthogonality for basis vectors
-    "include_feat_loss": True,  # include loss, that compares original trajectories w. reconstructed
     "use_sequence_randomization": False,  # randomize sequences for a class to enforce reconstruction of an. sequence
     "w_info": 1.0,  # weight for InfoNCE loss
     "w_res": 1.0,  # weight for residual loss
@@ -45,7 +48,7 @@ def train(sweep: bool = False):
 
 
 @app.command()
-def sweep(sweep_id: str = "", count: int = 25):
+def sweep(sweep_id: str = "", count: int = 100):
     sweep_config = load_sweep_config()
     if sweep_id == "":
         sweep_id = wandb.sweep(sweep_config, project="trajectory-subspace-clustering")
@@ -56,6 +59,11 @@ def sweep(sweep_id: str = "", count: int = 25):
         project="trajectory-subspace-clustering",
         count=count,
     )
+
+
+@app.command()
+def inference(model_name: str):
+    perform_inference(model_name=model_name, config=TRAIN_CONFIG)
 
 
 if __name__ == "__main__":

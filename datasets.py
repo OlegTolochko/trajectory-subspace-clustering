@@ -1,7 +1,9 @@
 import torch
 import os
+import re
 import scipy
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, Subset, DataLoader
+from sklearn.model_selection import train_test_split
 import numpy as np
 
 
@@ -23,6 +25,9 @@ class Hopkins155(Dataset):
                 if "x" in mat_data:
                     x_data_load = mat_data["x"]
 
+                if "y" in mat_data:
+                    y_data_load = mat_data["y"]
+
                 coords_2PF = x_data_load[0:2, :, :]  # (2, P, F)
                 num_points = coords_2PF.shape[1]
                 num_frames = coords_2PF.shape[2]
@@ -30,13 +35,27 @@ class Hopkins155(Dataset):
                 base_time = torch.arange(num_frames)
                 time_vectors = base_time.expand(num_points, -1)
 
+                y_coords_2PF = y_data_load[0:2, :, :]  # (2, P, F)
+                y_trajectories = np.transpose(y_coords_2PF, (1, 2, 0))  # (P, F, 2)
+
                 if "s" in mat_data:
                     labels_load = mat_data["s"].reshape(-1)
 
+                pattern = r"_g(.+)$"
+                match = re.search(pattern, seq_name)
+
+                if match:
+                    seq_type = match.group(1)
+                    seq_name = seq_name.rsplit("_g", 1)[0]
+                else:
+                    seq_type = "full"
+
                 self.sequence_data.append(
                     {
-                        "name": seq_name,
+                        "seq_name": seq_name,
+                        "seq_type": seq_type,
                         "trajectories": trajectories.astype(np.float32),
+                        "unnormalized_trajectories": y_trajectories.astype(np.float32),
                         "times": time_vectors,
                         "labels": labels_load.astype(np.int64),
                     }
@@ -57,8 +76,10 @@ class Hopkins155(Dataset):
         seq_info = self.sequence_data[idx]
         trajectories = seq_info["trajectories"]
         labels = seq_info["labels"]
-        seq_name = seq_info["name"]
+        seq_name = seq_info["seq_name"]
         time_vectors = seq_info["times"]
+        seq_type = seq_info["seq_type"]
+        y_trajectories = seq_info["unnormalized_trajectories"]
 
         trajectories_tensor = torch.tensor(trajectories, dtype=torch.float32)
         labels_tensor = torch.tensor(labels, dtype=torch.long)
@@ -67,9 +88,11 @@ class Hopkins155(Dataset):
 
         return {
             "trajectories": trajectories_tensor,
+            "unnormalized_trajectories": y_trajectories,
             "labels": labels_tensor,
             "times": time_tensor,
-            "name": seq_name,
+            "seq_name": seq_name,
+            "seq_type": seq_type,
             "num_clusters": num_clusters,
         }
 
@@ -294,3 +317,77 @@ def occlude_seq(seq_x, occlusion_percent):
         seq_x_occluded[start_idx : end_idx + 1] = replacement_tensor
 
     return seq_x_occluded
+
+
+def load_dataset(dataset_name):
+    if str.lower(dataset_name) == "hopkins155":
+        return Hopkins155()
+    elif str.lower(dataset_name) == "kt3dmoseg":
+        return KT3DMoSeg()
+    elif str.lower(dataset_name) == "hopkins12":
+        return Hopkins12()
+    else:
+        raise ValueError(f"Unknown dataset: {dataset_name}")
+
+
+def get_train_val_loaders(
+    dataset,
+    val_split_size,
+    strict_sequence_train_val_split,
+    include_partial_sequences_train,
+    include_partial_sequences_val,
+):
+    if strict_sequence_train_val_split:
+        full_sequences = []
+        sequences_by_name = {}
+
+        for i in range(len(dataset)):
+            seq = dataset[i]
+            seq_name = seq["seq_name"]
+            seq_type = seq["seq_type"]
+
+            if seq_name not in sequences_by_name:
+                sequences_by_name[seq_name] = []
+            sequences_by_name[seq_name].append(i)
+
+            if seq_type == "full":
+                full_sequences.append(seq_name)
+
+        train_seq_names, val_seq_names = train_test_split(
+            full_sequences, test_size=val_split_size, random_state=42
+        )
+
+        train_indices = []
+        for seq_name in train_seq_names:
+            if include_partial_sequences_train:
+                train_indices.extend(sequences_by_name[seq_name])
+            else:
+                for idx in sequences_by_name[seq_name]:
+                    seq = dataset[idx]
+                    if seq["seq_type"] == "full":
+                        train_indices.append(idx)
+
+        val_indices = []
+        for seq_name in val_seq_names:
+            if include_partial_sequences_val:
+                val_indices.extend(sequences_by_name[seq_name])
+            else:
+                for idx in sequences_by_name[seq_name]:
+                    seq = dataset[idx]
+                    if seq["seq_type"] == "full":
+                        val_indices.append(idx)
+
+        train_dataset = Subset(dataset, train_indices)
+        val_dataset = Subset(dataset, val_indices)
+
+    else:
+        train_dataset, val_dataset = train_test_split(
+            range(len(dataset)), test_size=val_split_size, random_state=42
+        )
+        train_dataset = Subset(dataset, train_dataset)
+        val_dataset = Subset(dataset, val_dataset)
+
+    train_loader = DataLoader(train_dataset, shuffle=True)
+    val_loader = DataLoader(val_dataset, shuffle=False)
+
+    return train_loader, val_loader
