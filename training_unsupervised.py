@@ -11,8 +11,19 @@ from tqdm import tqdm
 import wandb
 
 from models.trajectory_embedder import TrajectoryEmbeddingModel
-from losses import L_FeatDiff, L_InfoNCE, L_Residual, L_orthogonal, L_InfoNCE_unsupervised
-from datasets import augment_normalized_data, load_dataset, get_train_val_loaders, randomly_augment_seq
+from losses import (
+    L_FeatDiff,
+    L_InfoNCE,
+    L_Residual,
+    L_orthogonal,
+    L_InfoNCE_unsupervised,
+)
+from datasets import (
+    augment_normalized_data,
+    load_dataset,
+    get_train_val_loaders,
+    randomly_augment_seq,
+)
 from inference import evaluate_model_performance
 
 
@@ -114,17 +125,15 @@ def pretraining_loop(config, model, train_loader, device, optimizer, scheduler):
             seq_aug2 = randomly_augment_seq(seq)
 
             optimizer.zero_grad()
-            mask1 = (torch.rand_like(seq[..., :1], device=device) > 0.25)
-            mask2 = (torch.rand_like(seq[..., :1], device=device) > 0.25)
+            mask1 = torch.rand_like(seq[..., :1], device=device) > 0.25
+            mask2 = torch.rand_like(seq[..., :1], device=device) > 0.25
             seq_aug1 = seq_aug1 * mask1
             seq_aug2 = seq_aug2 * mask2
             seq_aug1_permuted = seq_aug1.permute(0, 2, 1)
             seq_aug2_permuted = seq_aug2.permute(0, 2, 1)
-            
-            
+
             f1 = model.feature_extractor(seq_aug1_permuted)
             f2 = model.feature_extractor(seq_aug2_permuted)
-
 
             loss = L_InfoNCE_unsupervised(f1, f2)
             loss.backward()
@@ -171,21 +180,19 @@ def full_training_loop(
             seq = batch_data["trajectories"].to(device).squeeze(0)  # (P, F, 2)
             seq_t = batch_data["times"].to(device).squeeze(0)  # (P, F)
             num_points = seq.shape[0]
-            
+
             optimizer.zero_grad()
             seq_aug1 = randomly_augment_seq(seq)
             seq_aug2 = randomly_augment_seq(seq)
-            
-            mask1 = (torch.rand_like(seq_aug1[..., :1], device=device) > 0.25)
-            mask2 = (torch.rand_like(seq_aug2[..., :1], device=device) > 0.25)
-            
+
+            mask1 = torch.rand_like(seq_aug1[..., :1], device=device) > 0.25
+            mask2 = torch.rand_like(seq_aug2[..., :1], device=device) > 0.25
+
             seq_aug1 = seq_aug1 * mask1
             seq_aug2 = seq_aug2 * mask2
-            
 
             f1, B1, h_t1 = model(seq_aug1, seq_t)
             f2, B2, h_t2 = model(seq_aug2, seq_t)
-
 
             B_flat1 = B1.view(num_points, -1)  # (P, 2F*rank)
             B_flat2 = B2.view(num_points, -1)  # (P, 2F*rank)
@@ -206,9 +213,7 @@ def full_training_loop(
             f_reconstructed2 = model.feature_extractor(x_reconstructed_permuted2)
             loss_infoNCE = L_InfoNCE_unsupervised(v_norm1, v_norm2)
 
-            loss_featdiff = L_FeatDiff(
-                f_original=f1, f_reconstructed=f_reconstructed2
-            )
+            loss_featdiff = L_FeatDiff(f_original=f1, f_reconstructed=f_reconstructed2)
 
             w_info = config["w_info"]
             w_res = config["w_res"]
@@ -219,9 +224,7 @@ def full_training_loop(
             w_feat_sum += w_feat * loss_featdiff
 
             total_loss = (
-                w_info * loss_infoNCE
-                + w_res * loss_residual
-                + w_feat * loss_featdiff
+                w_info * loss_infoNCE + w_res * loss_residual + w_feat * loss_featdiff
             )
             total_loss.backward()
             optimizer.step()
