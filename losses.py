@@ -19,6 +19,18 @@ def L_InfoNCE(features, labels, temperature: float = 1.0):
     return loss
 
 
+def L_InfoNCE_unsupervised(f1, f2, temperature = 1.0):
+    # (B, 128)@(128, B) -> (B, B); (B, 128) -> (B,1), so (B,1) @ (1,B) -> (B, B)
+    sim = (f1 @ f2.T)/(torch.linalg.vector_norm(f1, dim=-1, keepdim=True) @ torch.linalg.vector_norm(f2, dim=-1, keepdim=True).T)
+    cos_sim = torch.exp(sim/temperature)
+    cos_sim_copy = cos_sim.clone().fill_diagonal_(0)
+    cos_sim_rowwise_mean = torch.mean(cos_sim_copy, dim=-1)
+    
+    positive_pairs = torch.diagonal(cos_sim)
+    
+    return torch.sum(-torch.log(positive_pairs/cos_sim_rowwise_mean))
+
+
 def pairwise_squared_l2(X):
     dot_product = X @ X.T  # (B, B)
     squared_norms = torch.sum(X**2, dim=1, keepdim=True)  # (B, 1)
