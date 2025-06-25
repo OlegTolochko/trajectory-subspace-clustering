@@ -5,6 +5,7 @@ import scipy
 from torch.utils.data import Dataset, Subset, DataLoader
 from sklearn.model_selection import train_test_split
 import numpy as np
+import random
 
 
 class Hopkins155(Dataset):
@@ -317,6 +318,23 @@ def occlude_seq(seq_x, occlusion_percent):
         seq_x_occluded[start_idx : end_idx + 1] = replacement_tensor
 
     return seq_x_occluded
+
+
+def randomly_augment_seq(seq):
+    occlusion_percentages = [0, 0.1, 0.2, 0.3]
+    shift_percentages = [0, 0.1, 0.2, 0.3]
+    max_shift_amounts = [0, 0.1, 0.2, 0.3]
+
+    occlusion_percent = random.choice(occlusion_percentages)
+    shift_percent = random.choice(shift_percentages)
+    max_shift_amount = random.choice(max_shift_amounts)
+
+    seq_shifted = shift_seq(
+        seq_x=seq, max_shift_amount=max_shift_amount, shift_percent=shift_percent
+    )
+    seq_shifted_occluded = occlude_seq(seq_shifted, occlusion_percent=occlusion_percent)
+
+    return seq_shifted_occluded
 
 
 def load_dataset(dataset_name):
