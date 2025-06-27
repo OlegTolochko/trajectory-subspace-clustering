@@ -320,19 +320,44 @@ def occlude_seq(seq_x, occlusion_percent):
     return seq_x_occluded
 
 
-def randomly_augment_seq(seq):
-    occlusion_percentages = [0, 0.1, 0.2, 0.3]
-    shift_percentages = [0, 0.1, 0.2, 0.3]
-    max_shift_amounts = [0, 0.1, 0.2, 0.3]
+def shift_all_trajectories(seq, max_shift_amount=0.3):
+    seq_shifted = seq.clone()
+
+    shift = random.uniform(-max_shift_amount, max_shift_amount)
+    seq_shifted += shift
+    seq_shifted = torch.clamp(seq_shifted, 0, 1)
+
+    return seq_shifted
+
+
+def randomly_augment_seq(seq, config):
+    occlusion_percentages = np.arange(0, config["augmentation_occlusion_percent"], 0.1)
+    individual_shift_percentages = np.arange(
+        0, config["augmentation_individual_shift_percent"], 0.1
+    )
+    max_individual_shift_amounts = np.arange(
+        0, config["augmentation_individual_max_shift_amount"], 0.1
+    )
+    max_full_individual_amounts = np.arange(
+        0, config["augmentation_full_max_shift_amount"], 0.1
+    )
 
     occlusion_percent = random.choice(occlusion_percentages)
-    shift_percent = random.choice(shift_percentages)
-    max_shift_amount = random.choice(max_shift_amounts)
+    individual_shift_percent = random.choice(individual_shift_percentages)
+    max_individual_shift_amount = random.choice(max_individual_shift_amounts)
+    max_full_individual_amount = random.choice(max_full_individual_amounts)
 
     seq_shifted = shift_seq(
-        seq_x=seq, max_shift_amount=max_shift_amount, shift_percent=shift_percent
+        seq_x=seq,
+        max_shift_amount=max_individual_shift_amount,
+        shift_percent=individual_shift_percent,
     )
-    seq_shifted_occluded = occlude_seq(seq_shifted, occlusion_percent=occlusion_percent)
+    seq_full_shifted = shift_all_trajectories(
+        seq=seq_shifted, max_shift_amount=max_full_individual_amount
+    )
+    seq_shifted_occluded = occlude_seq(
+        seq_full_shifted, occlusion_percent=occlusion_percent
+    )
 
     return seq_shifted_occluded
 
