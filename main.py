@@ -2,7 +2,8 @@ import wandb
 import typer
 
 from training import train_model
-from sweep import load_sweep_config
+from training_unsupervised import train_model_unsupervised
+from sweep import load_sweep_config, load_unsupervised_sweep_config
 from inference import perform_inference
 
 app = typer.Typer()
@@ -30,21 +31,24 @@ TRAIN_CONFIG = {
     "w_res": 1.0,  # weight for residual loss
     "w_feat": 1.0,  # weight for feature difference loss
     "w_ortho": 0.01,  # weight for orthogonality loss
-    "augmentation_max_shift_amount": 0.0,  # Maximum training data point shift amount, range 0-1, 0 = no augmetation
-    "augmentation_shift_percent": 0.0,  # Percentage of training data points to shift, range 0-1, 0 = no augmetation
-    "augmentation_occlusion_percent": 0.0,  # Percentage of training data points to occlude
+    "augmentation_individual_max_shift_amount": 0.0,  # Maximum training individual data point shift amount, range 0-1, 0 = no augmetation
+    "augmentation_individual_shift_percent": 0.0,  # Percentage of training data points to shift, range 0-1, 0 = no augmetation
+    "augmentation_occlusion_percent": 0.0,  # Percentage of training data points to occlude, range 0-1, 0 = no augmetation
+    "augmentation_full_max_shift_amount": 0.0,  # Maximum shift amount for shifting whole sequence, range 0-1, 0 = no augmetation
 }
 
 
 @app.command()
-def train(sweep: bool = False):
+def train(sweep: bool = False, unsupervised=False):
     config = TRAIN_CONFIG
     with wandb.init(project="trajectory-subspace-clustering", config=config):
         if sweep:
             for key in wandb.config.as_dict():
                 config[key] = wandb.config.as_dict().get(key)
-
-        model = train_model(config=config)
+        if unsupervised:
+            model = train_model_unsupervised(config=config)
+        else:
+            model = train_model(config=config)
 
 
 @app.command()
@@ -56,6 +60,20 @@ def sweep(sweep_id: str = "", count: int = 100):
     wandb.agent(
         sweep_id,
         function=lambda: train(sweep=True),
+        project="trajectory-subspace-clustering",
+        count=count,
+    )
+
+
+@app.command()
+def unsupervised_sweep(sweep_id: str = "", count: int = 20):
+    sweep_config = load_unsupervised_sweep_config()
+    if sweep_id == "":
+        sweep_id = wandb.sweep(sweep_config, project="trajectory-subspace-clustering")
+
+    wandb.agent(
+        sweep_id,
+        function=lambda: train(sweep=True, unsupervised=True),
         project="trajectory-subspace-clustering",
         count=count,
     )
