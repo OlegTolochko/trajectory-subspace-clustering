@@ -331,35 +331,42 @@ def shift_all_trajectories(seq, max_shift_amount=0.3):
 
 
 def randomly_augment_seq(seq, config):
-    occlusion_percentages = np.arange(0, config["augmentation_occlusion_percent"], 0.1)
-    individual_shift_percentages = np.arange(
-        0, config["augmentation_individual_shift_percent"], 0.1
-    )
-    max_individual_shift_amounts = np.arange(
-        0, config["augmentation_individual_max_shift_amount"], 0.1
-    )
-    max_full_individual_amounts = np.arange(
-        0, config["augmentation_full_max_shift_amount"], 0.1
-    )
+    seq_augmented = seq
+    if config["augmentation_individual_shift_percent"] > 0:
+        individual_shift_percentages = np.arange(
+            0, config["augmentation_individual_shift_percent"], 0.1
+        )
+        max_individual_shift_amounts = np.arange(
+            0, config["augmentation_individual_max_shift_amount"], 0.1
+        )
+        individual_shift_percent = random.choice(individual_shift_percentages)
+        max_individual_shift_amount = random.choice(max_individual_shift_amounts)
 
-    occlusion_percent = random.choice(occlusion_percentages)
-    individual_shift_percent = random.choice(individual_shift_percentages)
-    max_individual_shift_amount = random.choice(max_individual_shift_amounts)
-    max_full_individual_amount = random.choice(max_full_individual_amounts)
+        seq_augmented = shift_seq(
+            seq_x=seq_augmented,
+            max_shift_amount=max_individual_shift_amount,
+            shift_percent=individual_shift_percent,
+        )
 
-    seq_shifted = shift_seq(
-        seq_x=seq,
-        max_shift_amount=max_individual_shift_amount,
-        shift_percent=individual_shift_percent,
-    )
-    seq_full_shifted = shift_all_trajectories(
-        seq=seq_shifted, max_shift_amount=max_full_individual_amount
-    )
-    seq_shifted_occluded = occlude_seq(
-        seq_full_shifted, occlusion_percent=occlusion_percent
-    )
+    if config["augmentation_full_max_shift_amount"] > 0:
+        max_full_shift_amounts = np.arange(
+            0, config["augmentation_full_max_shift_amount"], 0.1
+        )
+        max_full_shift_amount = random.choice(max_full_shift_amounts)
 
-    return seq_shifted_occluded
+        seq_augmented = shift_all_trajectories(
+            seq=seq_augmented, max_shift_amount=max_full_shift_amount
+        )
+
+    if config["augmentation_occlusion_percent"] > 0:
+        occlusion_percentages = np.arange(
+            0, config["augmentation_occlusion_percent"], 0.1
+        )
+        occlusion_percent = random.choice(occlusion_percentages)
+
+        seq_augmented = occlude_seq(seq_augmented, occlusion_percent=occlusion_percent)
+
+    return seq_augmented
 
 
 def load_dataset(dataset_name):

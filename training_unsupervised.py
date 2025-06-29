@@ -121,8 +121,8 @@ def pretraining_loop(config, model, train_loader, device, optimizer, scheduler):
         model.subspace_estimator.eval()
         for batch_data in train_loader:
             seq = batch_data["trajectories"].to(device).squeeze(0)
-            seq_aug1 = randomly_augment_seq(seq)
-            seq_aug2 = randomly_augment_seq(seq)
+            seq_aug1 = randomly_augment_seq(seq, config=config)
+            seq_aug2 = randomly_augment_seq(seq, config=config)
 
             optimizer.zero_grad()
             mask1 = torch.rand_like(seq[..., :1], device=device) > 0.25
@@ -182,8 +182,8 @@ def full_training_loop(
             num_points = seq.shape[0]
 
             optimizer.zero_grad()
-            seq_aug1 = randomly_augment_seq(seq)
-            seq_aug2 = randomly_augment_seq(seq)
+            seq_aug1 = randomly_augment_seq(seq, config=config)
+            seq_aug2 = randomly_augment_seq(seq, config=config)
 
             mask1 = torch.rand_like(seq_aug1[..., :1], device=device) > 0.25
             mask2 = torch.rand_like(seq_aug2[..., :1], device=device) > 0.25
