@@ -35,6 +35,8 @@ TRAIN_CONFIG = {
     "augmentation_individual_shift_percent": 0.0,  # Percentage of training data points to shift, range 0-1, 0 = no augmetation
     "augmentation_occlusion_percent": 0.0,  # Percentage of training data points to occlude, range 0-1, 0 = no augmetation
     "augmentation_full_max_shift_amount": 0.0,  # Maximum shift amount for shifting whole sequence, range 0-1, 0 = no augmetation
+    "augmentation_chunkwise_occlusion_percent": 0.0,  # Percentage of points to occlude chunkwise
+    "augmentation_chunkwise_occlusion_max_chunk_amount": 0,  # Maximum amount of chunks for chunkwise occlusion
 }
 
 
@@ -66,7 +68,7 @@ def sweep(sweep_id: str = "", count: int = 100):
 
 
 @app.command()
-def unsupervised_sweep(sweep_id: str = "", count: int = 20):
+def unsupervised_sweep(sweep_id: str = "", count: int = 100):
     sweep_config = load_unsupervised_sweep_config()
     if sweep_id == "":
         sweep_id = wandb.sweep(sweep_config, project="trajectory-subspace-clustering")

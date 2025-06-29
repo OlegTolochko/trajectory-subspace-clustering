@@ -59,6 +59,7 @@ def load_unsupervised_sweep_config(
     use_individual_shift_augmentation=True,
     use_full_shift_augmentation=True,
     occlude_points=True,
+    occlude_chunkwise=True,
 ):
     sweep_config = {"method": method}
 
@@ -66,8 +67,8 @@ def load_unsupervised_sweep_config(
     parameters_dict = {
         "validation_split": {"values": [0.2]},
         "pretraining_epochs": {"values": [30]},
-        "full_epochs": {"values": [60]},
-        "learning_rate": {"values": [0.001]},
+        "full_epochs": {"values": [50]},
+        "learning_rate": {"values": [0.0005]},
         "weight_decay": {"values": [1e-5]},
         "scheduler_gamma": {"values": [0.999]},
     }
@@ -92,6 +93,18 @@ def load_unsupervised_sweep_config(
     if occlude_points:
         parameters_dict.update(
             {"augmentation_occlusion_percent": {"values": [0.0, 0.1, 0.2, 0.3]}}
+        )
+
+    if occlude_chunkwise:
+        parameters_dict.update(
+            {
+                "augmentation_chunkwise_occlusion_percent": {
+                    "values": [0.0, 0.1, 0.2, 0.3]
+                },
+                "augmentation_chunkwise_occlusion_max_chunk_amount": {
+                    "values": [1, 2, 3, 4]
+                },
+            }
         )
 
     sweep_config["metric"] = eval_metric
