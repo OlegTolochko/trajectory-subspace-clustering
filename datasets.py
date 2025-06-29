@@ -382,10 +382,10 @@ def randomly_augment_seq(seq, config):
     seq_augmented = seq
     if config["augmentation_individual_shift_percent"] > 0:
         individual_shift_percentages = np.arange(
-            0, config["augmentation_individual_shift_percent"], 0.1
+            0, config["augmentation_individual_shift_percent"], 0.05
         )
         max_individual_shift_amounts = np.arange(
-            0, config["augmentation_individual_max_shift_amount"], 0.1
+            0, config["augmentation_individual_max_shift_amount"], 0.05
         )
         individual_shift_percent = random.choice(individual_shift_percentages)
         max_individual_shift_amount = random.choice(max_individual_shift_amounts)
@@ -398,7 +398,7 @@ def randomly_augment_seq(seq, config):
 
     if config["augmentation_full_max_shift_amount"] > 0:
         max_full_shift_amounts = np.arange(
-            0, config["augmentation_full_max_shift_amount"], 0.1
+            0, config["augmentation_full_max_shift_amount"], 0.05
         )
         max_full_shift_amount = random.choice(max_full_shift_amounts)
 
@@ -408,10 +408,10 @@ def randomly_augment_seq(seq, config):
 
     if config["augmentation_chunkwise_occlusion_percent"] > 0:
         chunkwise_occlusion_percentages = np.arange(
-            0, config["augmentation_chunkwise_occlusion_percent"]
+            0, config["augmentation_chunkwise_occlusion_percent"], 0.05
         )
         chunkwise_occlusion_max_chunk_amounts = np.arange(
-            0, config["augmentation_chunkwise_occlusion_max_chunk_amount"]
+            1, config["augmentation_chunkwise_occlusion_max_chunk_amount"] + 1, 1
         )
         chunkwise_occlusion_percent = random.choice(chunkwise_occlusion_percentages)
         chunkwise_occlusion_max_num_chunks = random.choice(
@@ -426,7 +426,7 @@ def randomly_augment_seq(seq, config):
 
     if config["augmentation_occlusion_percent"] > 0:
         occlusion_percentages = np.arange(
-            0, config["augmentation_occlusion_percent"], 0.1
+            0, config["augmentation_occlusion_percent"], 0.05
         )
         occlusion_percent = random.choice(occlusion_percentages)
 
