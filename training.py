@@ -12,7 +12,7 @@ import wandb
 
 from models.trajectory_embedder import TrajectoryEmbeddingModel
 from losses import L_FeatDiff, L_InfoNCE, L_Residual, L_orthogonal
-from datasets import augment_normalized_data, load_dataset, get_train_val_loaders
+from datasets import load_dataset, get_train_val_loaders, randomly_augment_seq
 from inference import evaluate_model_performance
 
 
@@ -107,30 +107,19 @@ def pretraining_loop(config, model, train_loader, device, optimizer, scheduler):
         model.feature_extractor.train()
         model.subspace_estimator.eval()
         for batch_data in train_loader:
-            seq_x = batch_data["trajectories"].to(device).squeeze(0)
+            seq_norm = batch_data["trajectories"].to(device).squeeze(0)
             seq_labels = batch_data["labels"].to(device).squeeze(0)
-            if (
-                config["augmentation_max_shift_amount"] != 0.0
-                or config["augmentation_shift_percent"] != 0.0
-                or config["augmentation_occlusion_percent"] != 0
-            ):
-                seq_x = augment_normalized_data(
-                    seq_x=seq_x,
-                    max_shift_amount=config["augmentation_max_shift_amount"],
-                    shift_percent=config["augmentation_shift_percent"],
-                    occlusion_percent=config["augmentation_occlusion_percent"],
-                )
-
-            num_points = seq_x.shape[0]
-            if num_points <= 1:
-                continue
+            seq_norm = randomly_augment_seq(seq=seq_norm, config=config)
 
             optimizer.zero_grad()
-            mask = torch.rand_like(seq_x[..., :1], device=device) > 0.25  # 25 % dropout
-            seq_x = seq_x * mask
+            mask = (
+                torch.rand_like(seq_norm[..., :1], device=device)
+                > config["dropout_rate"]
+            )
+            seq_norm = seq_norm * mask
             # model input: (Batch=P, Channels=2, SeqLen=F)
-            x_permuted = seq_x.permute(0, 2, 1)  # (P, 2, F)
-            f = model.feature_extractor(x_permuted)
+            seq_permuted = seq_norm.permute(0, 2, 1)  # (P, 2, F)
+            f = model.feature_extractor(seq_permuted)
 
             loss = L_InfoNCE(f, seq_labels)
             loss.backward()
@@ -175,45 +164,41 @@ def full_training_loop(
         w_feat_sum = 0.0
         w_ortho_sum = 0.0
         for batch_data in train_loader:
-            seq_x = batch_data["trajectories"].to(device).squeeze(0)  # (P, F, 2)
+            seq_norm = batch_data["trajectories"].to(device).squeeze(0)  # (P, F, 2)
             seq_labels = batch_data["labels"].to(device).squeeze(0)  # (P,)
             seq_t = batch_data["times"].to(device).squeeze(0)  # (P, F)
-            num_points = seq_x.shape[0]
-            if (
-                config["augmentation_max_shift_amount"] != 0.0
-                or config["augmentation_shift_percent"] != 0.0
-                or config["augmentation_occlusion_percent"] != 0
-            ):
-                seq_x = augment_normalized_data(
-                    seq_x=seq_x,
-                    max_shift_amount=config["augmentation_max_shift_amount"],
-                    shift_percent=config["augmentation_shift_percent"],
-                    occlusion_percent=config["augmentation_occlusion_percent"],
-                )
+            num_points = seq_norm.shape[0]
+            seq_norm = randomly_augment_seq(seq=seq_norm, config=config)
 
             optimizer.zero_grad()
-            f, B, h_t = model(seq_x, seq_t)
+            mask = (
+                torch.rand_like(seq_norm[..., :1], device=device)
+                > config["dropout_rate"]
+            )
+            seq_norm = seq_norm * mask
+
+            f, B, h_t = model(seq_norm, seq_t)
 
             B_flat = B.view(num_points, -1)  # (P, 2F*rank)
             v = torch.cat((f, B_flat), dim=1)
             v_norm = F.normalize(v, p=2, dim=1)
 
             if config["use_sequence_randomization"]:
-                seq_x_train = randomize_sequences_for_class(
-                    seq_x=seq_x, seq_labels=seq_labels, epoch=epoch, device=device
+                seq_train = randomize_sequences_for_class(
+                    seq_x=seq_norm, seq_labels=seq_labels, epoch=epoch, device=device
                 )
             else:
-                seq_x_train = seq_x
+                seq_train = seq_norm
 
-            x_reconstructed = reconstruct_x(seq_x_train, B)  # (P, F, 2)
+            x_reconstructed = reconstruct_x(seq_train, B)  # (P, F, 2)
             x_reconstructed_permuted = x_reconstructed.permute(0, 2, 1)
 
             loss_residual = L_Residual(
-                x_original=seq_x_train, x_reconstructed=x_reconstructed
+                x_original=seq_train, x_reconstructed=x_reconstructed
             )
 
             f_reconstructed = model.feature_extractor(x_reconstructed_permuted)
-            loss_infoNCE = L_InfoNCE(f, seq_labels)
+            loss_infoNCE = L_InfoNCE(v_norm, seq_labels)
             loss_ortho = L_orthogonal(h_t)
 
             loss_featdiff = L_FeatDiff(f_original=f, f_reconstructed=f_reconstructed)
