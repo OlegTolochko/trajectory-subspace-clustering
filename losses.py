@@ -19,6 +19,17 @@ def L_InfoNCE(features, labels, temperature: float = 1.0):
     return loss
 
 
+def L_InfoNCE_unsupervised(f1, f2, temperature=1.0, eps=1e-8):
+    n1 = torch.linalg.vector_norm(f1, dim=-1, keepdim=True).clamp_min(eps)
+    n2 = torch.linalg.vector_norm(f2, dim=-1, keepdim=True).clamp_min(eps)
+    logits = (f1 @ f2.T) / (n1 @ n2.T)
+    logits = logits / temperature
+
+    log_prob = logits - torch.logsumexp(logits, dim=1, keepdim=True)
+    loss = -torch.diagonal(log_prob).mean()
+    return loss
+
+
 def pairwise_squared_l2(X):
     dot_product = X @ X.T  # (B, B)
     squared_norms = torch.sum(X**2, dim=1, keepdim=True)  # (B, 1)

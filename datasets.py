@@ -5,6 +5,7 @@ import scipy
 from torch.utils.data import Dataset, Subset, DataLoader
 from sklearn.model_selection import train_test_split
 import numpy as np
+import random
 
 
 class Hopkins155(Dataset):
@@ -127,7 +128,7 @@ class Hopkins12(Dataset):
 
                 self.sequence_data.append(
                     {
-                        "name": seq_name,
+                        "seq_name": seq_name,
                         "trajectories": trajectories.astype(np.float32),
                         "times": time_vectors,
                         "labels": labels_load.astype(np.int64),
@@ -149,7 +150,7 @@ class Hopkins12(Dataset):
         seq_info = self.sequence_data[idx]
         trajectories = seq_info["trajectories"]
         labels = seq_info["labels"]
-        seq_name = seq_info["name"]
+        seq_name = seq_info["seq_name"]
         time_vectors = seq_info["times"]
 
         trajectories_tensor = torch.tensor(trajectories, dtype=torch.float32)
@@ -161,7 +162,7 @@ class Hopkins12(Dataset):
             "trajectories": trajectories_tensor,
             "labels": labels_tensor,
             "times": time_tensor,
-            "name": seq_name,
+            "seq_name": seq_name,
             "num_clusters": num_clusters,
         }
 
@@ -249,23 +250,6 @@ class KT3DMoSeg(Dataset):
         }
 
 
-def augment_normalized_data(
-    seq_x, max_shift_amount=0.1, shift_percent=0.1, occlusion_percent=0.1
-):
-    seq_augmented = seq_x
-    if max_shift_amount != 0 and shift_percent != 0:
-        seq_augmented = shift_seq(
-            seq_x=seq_x, max_shift_amount=max_shift_amount, shift_percent=shift_percent
-        )
-
-    if occlusion_percent != 0:
-        seq_augmented = occlude_seq(
-            seq_x=seq_augmented, occlusion_percent=occlusion_percent
-        )
-
-    return seq_augmented
-
-
 def shift_seq(seq_x, max_shift_amount=0.1, shift_percent=0.1):
     seq_x_shifted = seq_x.clone()
 
@@ -317,6 +301,121 @@ def occlude_seq(seq_x, occlusion_percent):
         seq_x_occluded[start_idx : end_idx + 1] = replacement_tensor
 
     return seq_x_occluded
+
+
+def shift_all_trajectories(seq, max_shift_amount=0.3):
+    seq_shifted = seq.clone()
+
+    shift = random.uniform(-max_shift_amount, max_shift_amount)
+    seq_shifted += shift
+    seq_shifted = torch.clamp(seq_shifted, 0, 1)
+
+    return seq_shifted
+
+
+def occlude_seq_chunkwise(seq, occlusion_percent, max_num_chunks):
+    seq_occluded = seq.clone()
+    num_points = seq.shape[0]
+    device = seq.device
+
+    occlusion_mask = torch.zeros(num_points, dtype=torch.bool, device=device)
+
+    occlusion_positions = torch.randint(0, num_points, (max_num_chunks,), device=device)
+
+    max_length_per_chunk = int(
+        num_points * (occlusion_percent * 2 / max_num_chunks + 0.01)
+    )
+    if max_length_per_chunk == 0:
+        max_length_per_chunk = 1
+
+    chunk_lengths = torch.randint(
+        1, max_length_per_chunk + 1, (max_num_chunks,), device=device
+    )
+
+    for i in range(max_num_chunks):
+        start = occlusion_positions[i].item()
+        length = chunk_lengths[i].item()
+        end = min(start + length, num_points)
+        occlusion_mask[start:end] = True
+
+    i = 0
+    while i < num_points:
+        if not occlusion_mask[i]:
+            i += 1
+            continue
+        start_idx = i
+
+        while i < num_points and occlusion_mask[i]:
+            i += 1
+        end_idx = i - 1
+        source_idx = start_idx - 1
+
+        if start_idx == 0:
+            if end_idx == num_points - 1:
+                continue
+            source_idx = end_idx + 1
+
+        replacement_tensor = seq[source_idx]
+        seq_occluded[start_idx : end_idx + 1] = replacement_tensor
+
+    return seq_occluded
+
+
+def randomly_augment_seq(seq, config):
+    seq_augmented = seq
+    if config["augmentation_individual_shift_percent"] > 0:
+        individual_shift_percentages = np.arange(
+            0, config["augmentation_individual_shift_percent"], 0.05
+        )
+        max_individual_shift_amounts = np.arange(
+            0, config["augmentation_individual_max_shift_amount"], 0.05
+        )
+        individual_shift_percent = random.choice(individual_shift_percentages)
+        max_individual_shift_amount = random.choice(max_individual_shift_amounts)
+
+        seq_augmented = shift_seq(
+            seq_x=seq_augmented,
+            max_shift_amount=max_individual_shift_amount,
+            shift_percent=individual_shift_percent,
+        )
+
+    if config["augmentation_full_max_shift_amount"] > 0:
+        max_full_shift_amounts = np.arange(
+            0, config["augmentation_full_max_shift_amount"], 0.05
+        )
+        max_full_shift_amount = random.choice(max_full_shift_amounts)
+
+        seq_augmented = shift_all_trajectories(
+            seq=seq_augmented, max_shift_amount=max_full_shift_amount
+        )
+
+    if config["augmentation_chunkwise_occlusion_percent"] > 0:
+        chunkwise_occlusion_percentages = np.arange(
+            0, config["augmentation_chunkwise_occlusion_percent"], 0.05
+        )
+        chunkwise_occlusion_max_chunk_amounts = np.arange(
+            1, config["augmentation_chunkwise_occlusion_max_chunk_amount"] + 1, 1
+        )
+        chunkwise_occlusion_percent = random.choice(chunkwise_occlusion_percentages)
+        chunkwise_occlusion_max_num_chunks = random.choice(
+            chunkwise_occlusion_max_chunk_amounts
+        )
+
+        seq_augmented = occlude_seq_chunkwise(
+            seq_augmented,
+            occlusion_percent=chunkwise_occlusion_percent,
+            max_num_chunks=chunkwise_occlusion_max_num_chunks,
+        )
+
+    if config["augmentation_occlusion_percent"] > 0:
+        occlusion_percentages = np.arange(
+            0, config["augmentation_occlusion_percent"], 0.05
+        )
+        occlusion_percent = random.choice(occlusion_percentages)
+
+        seq_augmented = occlude_seq(seq_augmented, occlusion_percent=occlusion_percent)
+
+    return seq_augmented
 
 
 def load_dataset(dataset_name):
