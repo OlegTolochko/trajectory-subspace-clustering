@@ -128,7 +128,7 @@ class Hopkins12(Dataset):
 
                 self.sequence_data.append(
                     {
-                        "name": seq_name,
+                        "seq_name": seq_name,
                         "trajectories": trajectories.astype(np.float32),
                         "times": time_vectors,
                         "labels": labels_load.astype(np.int64),
@@ -150,7 +150,7 @@ class Hopkins12(Dataset):
         seq_info = self.sequence_data[idx]
         trajectories = seq_info["trajectories"]
         labels = seq_info["labels"]
-        seq_name = seq_info["name"]
+        seq_name = seq_info["seq_name"]
         time_vectors = seq_info["times"]
 
         trajectories_tensor = torch.tensor(trajectories, dtype=torch.float32)
@@ -162,7 +162,7 @@ class Hopkins12(Dataset):
             "trajectories": trajectories_tensor,
             "labels": labels_tensor,
             "times": time_tensor,
-            "name": seq_name,
+            "seq_name": seq_name,
             "num_clusters": num_clusters,
         }
 
@@ -248,23 +248,6 @@ class KT3DMoSeg(Dataset):
             "name": seq_name,
             "num_clusters": num_clusters,
         }
-
-
-def augment_normalized_data(
-    seq_x, max_shift_amount=0.1, shift_percent=0.1, occlusion_percent=0.1
-):
-    seq_augmented = seq_x
-    if max_shift_amount != 0 and shift_percent != 0:
-        seq_augmented = shift_seq(
-            seq_x=seq_x, max_shift_amount=max_shift_amount, shift_percent=shift_percent
-        )
-
-    if occlusion_percent != 0:
-        seq_augmented = occlude_seq(
-            seq_x=seq_augmented, occlusion_percent=occlusion_percent
-        )
-
-    return seq_augmented
 
 
 def shift_seq(seq_x, max_shift_amount=0.1, shift_percent=0.1):
