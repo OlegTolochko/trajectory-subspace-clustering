@@ -43,6 +43,67 @@ def calculate_clustering_error(labels_true, labels_pred):
     return error_rate
 
 
+def cluster_unprocessed_trajectories(data, cluster_algo_name = "hierarchical"):
+    individual_error_rates = []
+
+    nmi_scores = []
+    ari_scores = []
+    for sequence in data:
+        seq = sequence["trajectories"].squeeze(0)
+
+        seq_labels_gt = sequence["labels"].squeeze(0)
+        k_field = sequence["num_clusters"]
+        k = k_field.item() if torch.is_tensor(k_field) else int(k_field)
+        seq = seq.reshape(seq.shape[0], -1)
+        
+        predicted_labels = None
+        if cluster_algo_name == "hierarchical":
+            clusters = AgglomerativeClustering(
+                n_clusters=k, linkage="ward", compute_distances=False
+            )
+            predicted_labels = clusters.fit_predict(seq)
+        elif cluster_algo_name == "kmeans":
+            clusters = KMeans(n_clusters=k, random_state=0, n_init=10)
+            predicted_labels = clusters.fit_predict(seq)
+        elif cluster_algo_name == "spectral":
+            clusters = SpectralClustering(
+                n_clusters=k, random_state=0, affinity="rbf", n_neighbors=20
+            )
+            predicted_labels = clusters.fit_predict(seq)
+        else:
+            print(f"Error: Unknown clustering algorithm '{cluster_algo_name}'")
+            continue
+
+        nmi = normalized_mutual_info_score(seq_labels_gt, predicted_labels)
+        ari = adjusted_mutual_info_score(seq_labels_gt, predicted_labels)
+        nmi_scores.append(nmi)
+        ari_scores.append(ari)
+
+        error_rate = calculate_clustering_error(
+            seq_labels_gt.numpy(), predicted_labels
+        )
+        individual_error_rates.append(error_rate)
+
+    mean_error_rate = sum(individual_error_rates) / len(individual_error_rates)
+    median_error_rate = np.median(individual_error_rates)
+    mean_nmi = sum(nmi_scores) / len(nmi_scores)
+    mean_ari = sum(ari_scores) / len(ari_scores)
+    print(f"Evaluation Complete with {cluster_algo_name} clustering:")
+    print(f"Mean Clustering Error: {mean_error_rate * 100:.2f}%")
+    print(f"Median Clustering Error: {median_error_rate * 100:.2f}%")
+    print(f"Mean NMI Score: {mean_nmi:.3f}")
+    print(f"Mean ARI Score: {mean_ari:.3f}\n")
+
+    return mean_error_rate 
+
+
+def compare_all_clustering_methods_unprocessed():
+    data = load_dataset("hopkins155")
+    algorithms = ["hierarchical", "kmeans", "spectral"]
+    for algorithm in algorithms:
+        cluster_unprocessed_trajectories(data, algorithm)
+
+
 def evaluate_model_performance(
     model,
     data,
@@ -260,4 +321,4 @@ def perform_inference(model_name, config):
 
 
 if __name__ == "__main__":
-    perform_inference()
+    compare_all_clustering_methods_unprocessed()
