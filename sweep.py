@@ -11,9 +11,7 @@ def load_sweep_config(
     sweep_config = {"method": method}
 
     eval_metric = {"name": "mean_clustering_error", "goal": "minimize"}
-    parameters_dict = {
-        "scheduler_gamma": {"values": [0.999]},
-    }
+    parameters_dict = {}
 
     if optimize_loss_weights:
         parameters_dict.update(
