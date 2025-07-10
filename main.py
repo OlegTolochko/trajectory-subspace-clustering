@@ -12,25 +12,25 @@ app = typer.Typer()
 TRAIN_CONFIG = {
     "model_name": "model",
     "pretraining_epochs": 30,
-    "full_epochs": 60,
+    "full_epochs": 50,
     "learning_rate": 0.001,
     "weight_decay": 1e-5,
     "scheduler_gamma": 0.999,
     "batch_size": 1,
-    "dropout_rate": 0.25,
-    "validation_split": 0.2,
+    "dropout_rate": 0.1,
+    "validation_split": 0.2,  # if set to 1.0, the val set will be the full training set
     "include_partial_sequences_train": True,  # Dataset also includes partial versions of sequences, True to include
     "include_partial_sequences_val": True,
     "strict_sequence_train_val_split": True,  # enforces, that associated partial sequences are not mixed between train and val data
     "train_data": "Hopkins155",  # Options: Hopkins155, Hopkins12, KT3DMoSeg
-    "additional_val_data": "Hopkins12",  # Options: None, Hopkins155, Hopkins12, KT3DMoSeg
-    "generate_video_from_last_val_run": True,  # Generates video of point clusters on top of original video in last val run
+    "additional_val_data": None,  # Options: None, Hopkins155, Hopkins12, KT3DMoSeg
+    "generate_video_from_last_val_run": False,  # Generates video of point clusters on top of original video in last val run
     "device": "cuda",  # Options: cuda, cpu, mps
     "alph0": False,  # zero-out first part of basis-function term
     "use_sequence_randomization": False,  # randomize sequences for a class to enforce reconstruction of an. sequence
     "w_info": 1.0,  # weight for InfoNCE loss
-    "w_res": 1.0,  # weight for residual loss
-    "w_feat": 1.0,  # weight for feature difference loss
+    "w_res": 0.5,  # weight for residual loss
+    "w_feat": 0.5,  # weight for feature difference loss
     "w_ortho": 0.0,  # weight for orthogonality loss
     "augmentation_individual_max_shift_amount": 0.0,  # Maximum training individual data point shift amount, range 0-1, 0 = no augmetation
     "augmentation_individual_shift_percent": 0.0,  # Percentage of training data points to shift, range 0-1, 0 = no augmetation
@@ -42,7 +42,7 @@ TRAIN_CONFIG = {
 
 
 @app.command()
-def train(sweep: bool = False, unsupervised=False):
+def train(sweep: bool = False, unsupervised: bool = False):
     config = TRAIN_CONFIG
     with wandb.init(project="trajectory-subspace-clustering", config=config):
         if sweep:
@@ -62,7 +62,7 @@ def sweep(sweep_id: str = "", count: int = 100):
 
     wandb.agent(
         sweep_id,
-        function=lambda: train(sweep=True),
+        function=lambda: train(sweep=True, unsupervised=False),
         project="trajectory-subspace-clustering",
         count=count,
     )
