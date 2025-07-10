@@ -1,6 +1,7 @@
 import os
 
 import torch
+import torch.nn.functional as F
 from models.trajectory_embedder import TrajectoryEmbeddingModel
 from datasets import load_dataset, get_train_val_loaders
 from torch.utils.data import DataLoader
@@ -55,7 +56,7 @@ def cluster_unprocessed_trajectories(data, cluster_algo_name = "hierarchical"):
         k_field = sequence["num_clusters"]
         k = k_field.item() if torch.is_tensor(k_field) else int(k_field)
         seq = seq.reshape(seq.shape[0], -1)
-        
+
         predicted_labels = None
         if cluster_algo_name == "hierarchical":
             clusters = AgglomerativeClustering(
@@ -134,25 +135,26 @@ def evaluate_model_performance(
 
             f, B, _ = model(seq_x, seq_t)
             B_flat = B.view(B.size(0), -1)
-            v = torch.cat((f, B_flat), dim=1)
-            v = torch.nn.functional.normalize(v, p=2, dim=1)
-            v_feats_np = v.cpu().numpy()
+            f_norm = F.normalize(f, p=2, dim=1)
+            B_flat_norm = F.normalize(B_flat, p=2, dim=1)
+            v = torch.cat((f_norm, B_flat_norm), dim=1).cpu().numpy()
+            f = f.cpu().numpy()
 
             predicted_labels = None
             if cluster_algo_name == "hierarchical":
                 clusters = AgglomerativeClustering(
                     n_clusters=k, linkage="ward", compute_distances=False
                 )
-                predicted_labels = clusters.fit_predict(v_feats_np)
+                predicted_labels = clusters.fit_predict(v)
             elif cluster_algo_name == "kmeans":
                 clusters = KMeans(n_clusters=k, random_state=0, n_init=10)
-                predicted_labels = clusters.fit_predict(v_feats_np)
+                predicted_labels = clusters.fit_predict(v)
             elif cluster_algo_name == "spectral":
                 # tested options: 'rbf', 'nearest_neighbor'; possibly worth experminenting with different hyp. params here
                 clusters = SpectralClustering(
                     n_clusters=k, random_state=0, affinity="rbf", n_neighbors=20
                 )
-                predicted_labels = clusters.fit_predict(v_feats_np)
+                predicted_labels = clusters.fit_predict(v)
             else:
                 print(f"Error: Unknown clustering algorithm '{cluster_algo_name}'")
                 continue
@@ -320,5 +322,3 @@ def perform_inference(model_name, config):
     )
 
 
-if __name__ == "__main__":
-    compare_all_clustering_methods_unprocessed()
