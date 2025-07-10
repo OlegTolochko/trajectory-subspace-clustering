@@ -436,6 +436,11 @@ def get_train_val_loaders(
     include_partial_sequences_train,
     include_partial_sequences_val,
 ):
+    if val_split_size == 1.0:
+        train_loader = DataLoader(dataset, shuffle=True)
+        val_loader = DataLoader(dataset, shuffle=False)
+        return train_loader, val_loader
+ 
     if strict_sequence_train_val_split:
         full_sequences = []
         sequences_by_name = {}
