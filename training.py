@@ -124,6 +124,7 @@ def pretraining_loop(config, model, train_loader, device, optimizer, scheduler):
             loss = L_InfoNCE(f, seq_labels)
             loss.backward()
             optimizer.step()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
             epoch_loss_stage1 += loss.item()
             num_seq_processed += 1
 
@@ -180,8 +181,10 @@ def full_training_loop(
             f, B, h_t = model(seq_norm, seq_t)
 
             B_flat = B.view(num_points, -1)  # (P, 2F*rank)
-            v = torch.cat((f, B_flat), dim=1)
-            v_norm = F.normalize(v, p=2, dim=1)
+
+            f_norm = F.normalize(f, dim=1)
+            B_flat_norm = F.normalize(B_flat, dim=1)
+            v = torch.cat((f_norm, B_flat_norm), dim=1)
 
             if config["use_sequence_randomization"]:
                 seq_train = randomize_sequences_for_class(
@@ -198,7 +201,7 @@ def full_training_loop(
             )
 
             f_reconstructed = model.feature_extractor(x_reconstructed_permuted)
-            loss_infoNCE = L_InfoNCE(v_norm, seq_labels)
+            loss_infoNCE = L_InfoNCE(v, seq_labels)
             loss_ortho = L_orthogonal(h_t)
 
             loss_featdiff = L_FeatDiff(f_original=f, f_reconstructed=f_reconstructed)
@@ -220,6 +223,7 @@ def full_training_loop(
                 + w_ortho * loss_ortho
             )
             total_loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
             optimizer.step()
             epoch_loss_stage2 += total_loss.item()
             num_seq_processed += 1
