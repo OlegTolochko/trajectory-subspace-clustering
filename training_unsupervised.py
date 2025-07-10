@@ -19,7 +19,6 @@ from losses import (
     L_InfoNCE_unsupervised,
 )
 from datasets import (
-    augment_normalized_data,
     load_dataset,
     get_train_val_loaders,
     randomly_augment_seq,
@@ -197,11 +196,13 @@ def full_training_loop(
             B_flat1 = B1.view(num_points, -1)  # (P, 2F*rank)
             B_flat2 = B2.view(num_points, -1)  # (P, 2F*rank)
 
-            v1 = torch.cat((f1, B_flat1), dim=1)
-            v2 = torch.cat((f2, B_flat2), dim=1)
+            f1_norm = F.normalize(f1, p=2, dim=1)
+            B_flat1_norm = F.normalize(B_flat1, p=2, dim=1)
+            f2_norm = F.normalize(f2, p=2, dim=1)
+            B_flat2_norm = F.normalize(B_flat2, p=2, dim=1)
 
-            v_norm1 = F.normalize(v1, p=2, dim=1)
-            v_norm2 = F.normalize(v2, p=2, dim=1)
+            v1 = torch.cat((f1_norm, B_flat1_norm), dim=1)
+            v2 = torch.cat((f2_norm, B_flat2_norm), dim=1)
 
             x_reconstructed2 = reconstruct_x(seq_aug2, B2)  # (P, F, 2)
             x_reconstructed_permuted2 = x_reconstructed2.permute(0, 2, 1)
@@ -211,7 +212,7 @@ def full_training_loop(
             )
 
             f_reconstructed2 = model.feature_extractor(x_reconstructed_permuted2)
-            loss_infoNCE = L_InfoNCE_unsupervised(v_norm1, v_norm2)
+            loss_infoNCE = L_InfoNCE_unsupervised(v1, v2)
 
             loss_featdiff = L_FeatDiff(f_original=f1, f_reconstructed=f_reconstructed2)
 
