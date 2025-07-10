@@ -44,7 +44,7 @@ def calculate_clustering_error(labels_true, labels_pred):
     return error_rate
 
 
-def cluster_unprocessed_trajectories(data, cluster_algo_name = "hierarchical"):
+def cluster_unprocessed_trajectories(data, cluster_algo_name="hierarchical"):
     individual_error_rates = []
 
     nmi_scores = []
@@ -80,9 +80,7 @@ def cluster_unprocessed_trajectories(data, cluster_algo_name = "hierarchical"):
         nmi_scores.append(nmi)
         ari_scores.append(ari)
 
-        error_rate = calculate_clustering_error(
-            seq_labels_gt.numpy(), predicted_labels
-        )
+        error_rate = calculate_clustering_error(seq_labels_gt.numpy(), predicted_labels)
         individual_error_rates.append(error_rate)
 
     mean_error_rate = sum(individual_error_rates) / len(individual_error_rates)
@@ -95,7 +93,7 @@ def cluster_unprocessed_trajectories(data, cluster_algo_name = "hierarchical"):
     print(f"Mean NMI Score: {mean_nmi:.3f}")
     print(f"Mean ARI Score: {mean_ari:.3f}\n")
 
-    return mean_error_rate 
+    return mean_error_rate
 
 
 def compare_all_clustering_methods_unprocessed():
@@ -320,5 +318,3 @@ def perform_inference(model_name, config):
         generate_video=True,
         model_name=model_name,
     )
-
-
