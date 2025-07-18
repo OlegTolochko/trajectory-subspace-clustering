@@ -306,8 +306,10 @@ def occlude_seq(seq_x, occlusion_percent):
 def shift_all_trajectories(seq, max_shift_amount=0.3):
     seq_shifted = seq.clone()
 
-    shift = random.uniform(-max_shift_amount, max_shift_amount)
-    seq_shifted += shift
+    shift_y = random.uniform(-max_shift_amount, max_shift_amount)
+    shift_x = random.uniform(-max_shift_amount, max_shift_amount)
+    seq_shifted[:, :, 0] += shift_x
+    seq_shifted[:, :, 1] += shift_y
     seq_shifted = torch.clamp(seq_shifted, 0, 1)
 
     return seq_shifted
