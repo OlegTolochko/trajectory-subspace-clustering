@@ -175,6 +175,7 @@ def full_training_loop(
         w_info_sum = 0.0
         w_res_sum = 0.0
         w_feat_sum = 0.0
+        w_ortho_sum = 0.0
         for batch_data in train_loader:
             seq = batch_data["trajectories"].to(device).squeeze(0)  # (P, F, 2)
             seq_t = batch_data["times"].to(device).squeeze(0)  # (P, F)
@@ -216,16 +217,23 @@ def full_training_loop(
 
             loss_featdiff = L_FeatDiff(f_original=f1, f_reconstructed=f_reconstructed2)
 
+            loss_ortho = 0.5 * L_orthogonal(h_t1) + 0.5 * L_orthogonal(h_t2)
+
             w_info = config["w_info"]
             w_res = config["w_res"]
             w_feat = config["w_feat"]
+            w_ortho = config["w_ortho"]
 
             w_info_sum += w_info * loss_infoNCE
             w_res_sum += w_res * loss_residual
             w_feat_sum += w_feat * loss_featdiff
+            w_ortho_sum += w_ortho * loss_ortho
 
             total_loss = (
-                w_info * loss_infoNCE + w_res * loss_residual + w_feat * loss_featdiff
+                w_info * loss_infoNCE
+                + w_res * loss_residual
+                + w_feat * loss_featdiff
+                + w_ortho * loss_ortho
             )
             total_loss.backward()
             optimizer.step()
@@ -238,6 +246,7 @@ def full_training_loop(
         metrics["infonce_loss"] = w_info_sum / num_seq_processed
         metrics["residual_loss"] = w_res_sum / num_seq_processed
         metrics["feat_diff_loss"] = w_feat_sum / num_seq_processed
+        metrics["ortho_loss"] = w_ortho_sum / num_seq_processed
 
         metrics["mean_clustering_error"] = evaluate_model_performance(
             model, val_loader, config["train_data"], model_name=model_name
@@ -251,6 +260,7 @@ def full_training_loop(
 
         if metrics["mean_clustering_error"] < best_mean_clustering_error:
             best_model_weights = copy.deepcopy(model.state_dict())
+            best_mean_clustering_error = metrics["mean_clustering_error"]
         if wandb.run:
             wandb.log(metrics, step=epoch + 1)
 
@@ -258,7 +268,7 @@ def full_training_loop(
             f"Full Training Epoch {epoch + 1}/{config['full_epochs']}, Avg Loss: {metrics['total_loss']:.4f}"
         )
         print(
-            f"Epoch {epoch + 1}/{config['full_epochs']}: InfoNCE Loss: {metrics['infonce_loss']:.4f}, Res Loss: {metrics['residual_loss']:.4f}, Feat Loss: {metrics['feat_diff_loss']:.4f}"
+            f"Epoch {epoch + 1}/{config['full_epochs']}: InfoNCE Loss: {metrics['infonce_loss']:.4f}, Res Loss: {metrics['residual_loss']:.4f}, Feat Loss: {metrics['feat_diff_loss']:.4f}, Ortho Loss: {metrics['ortho_loss']:.4f}"
         )
 
     model.load_state_dict(best_model_weights)
