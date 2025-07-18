@@ -248,6 +248,7 @@ def full_training_loop(
 
         if metrics["mean_clustering_error"] < best_mean_clustering_error:
             best_model_weights = copy.deepcopy(model.state_dict())
+            best_mean_clustering_error = metrics["mean_clustering_error"]
 
         wandb.log(metrics, step=epoch + 1)
 
