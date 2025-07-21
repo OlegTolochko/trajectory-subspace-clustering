@@ -1,5 +1,7 @@
 data/
-out/
+out/models/*
+!out/models/model-unsupervised.pth
+
 __pycache__/
 models/__pycache__
 wandb
