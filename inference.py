@@ -157,7 +157,8 @@ def evaluate_model_performance(
                 print(f"Error: Unknown clustering algorithm '{cluster_algo_name}'")
                 continue
 
-            if generate_video:
+
+            if generate_video and sequence["seq_type"][0] == "full":
                 seq_unnormalized = sequence["unnormalized_trajectories"]
                 generate_cluster_video(
                     labels_pred=predicted_labels,
