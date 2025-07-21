@@ -1,3 +1,6 @@
+import os
+import warnings
+
 import wandb
 import typer
 
@@ -11,14 +14,14 @@ app = typer.Typer()
 # base setup according to paper
 TRAIN_CONFIG = {
     "model_name": "model",
-    "pretraining_epochs": 30,
-    "full_epochs": 50,
-    "learning_rate": 0.001,
+    "pretraining_epochs": 25,
+    "full_epochs": 40,
+    "learning_rate": 0.00025,
     "weight_decay": 1e-5,
     "scheduler_gamma": 0.999,
     "batch_size": 1,
     "dropout_rate": 0.1,
-    "validation_split": 0.2,  # if set to 1.0, the val set will be the full training set
+    "validation_split": 1.0,  # if set to 1.0, the val set will be the full training set
     "include_partial_sequences_train": True,  # Dataset also includes partial versions of sequences, True to include
     "include_partial_sequences_val": True,
     "strict_sequence_train_val_split": True,  # enforces, that associated partial sequences are not mixed between train and val data
@@ -41,8 +44,47 @@ TRAIN_CONFIG = {
 }
 
 
+def setup_directories():
+    os.makedirs("out", exist_ok=True)
+    os.makedirs("out/models", exist_ok=True)
+    print("Created output directories: out/ and out/models/")
+
+
+def validate_data_directories():
+    data_dir = "data"
+
+    if not os.path.exists(data_dir):
+        warnings.warn(
+            f"Data directory '{data_dir}' not found! Please create it and add your datasets.",
+            UserWarning,
+        )
+        return
+
+    expected_datasets = ["Hopkins155", "Hopkins12", "KT3DMoSeg"]
+
+    for dataset in expected_datasets:
+        dataset_path = os.path.join(data_dir, dataset)
+        if not os.path.exists(dataset_path):
+            warnings.warn(
+                f"Dataset directory '{dataset_path}' not found. "
+                f"If you plan to use {dataset}, please add the data to this directory.",
+                UserWarning,
+            )
+        elif not os.listdir(dataset_path):
+            warnings.warn(
+                f"Dataset directory '{dataset_path}' exists but is empty. "
+                f"Please add the {dataset} dataset files.",
+                UserWarning,
+            )
+        else:
+            print(f"Found {dataset} data in {dataset_path}")
+
+
 @app.command()
 def train(sweep: bool = False, unsupervised: bool = False):
+    setup_directories()
+    validate_data_directories()
+
     config = TRAIN_CONFIG
     with wandb.init(project="trajectory-subspace-clustering", config=config):
         if sweep:
@@ -56,6 +98,9 @@ def train(sweep: bool = False, unsupervised: bool = False):
 
 @app.command()
 def sweep(sweep_id: str = "", count: int = 100):
+    setup_directories()
+    validate_data_directories()
+
     sweep_config = load_sweep_config()
     if sweep_id == "":
         sweep_id = wandb.sweep(sweep_config, project="trajectory-subspace-clustering")
@@ -69,7 +114,10 @@ def sweep(sweep_id: str = "", count: int = 100):
 
 
 @app.command()
-def unsupervised_sweep(sweep_id: str = "", count: int = 50):
+def unsupervised_sweep(sweep_id: str = "", count: int = 100):
+    setup_directories()
+    validate_data_directories()
+
     sweep_config = load_sweep_config()
     if sweep_id == "":
         sweep_id = wandb.sweep(sweep_config, project="trajectory-subspace-clustering")
@@ -84,6 +132,8 @@ def unsupervised_sweep(sweep_id: str = "", count: int = 50):
 
 @app.command()
 def inference(model_name: str):
+    validate_data_directories()
+
     perform_inference(model_name=model_name, config=TRAIN_CONFIG)
 
 
