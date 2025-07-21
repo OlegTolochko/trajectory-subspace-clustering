@@ -12,7 +12,7 @@ from inference import perform_inference
 app = typer.Typer()
 
 # base setup according to paper
-TRAIN_CONFIG = {
+CONFIG = {
     "model_name": "model",
     "pretraining_epochs": 25,
     "full_epochs": 40,
@@ -85,7 +85,7 @@ def train(sweep: bool = False, unsupervised: bool = False):
     setup_directories()
     validate_data_directories()
 
-    config = TRAIN_CONFIG
+    config = CONFIG
     with wandb.init(project="trajectory-subspace-clustering", config=config):
         if sweep:
             for key in wandb.config.as_dict():
@@ -134,7 +134,7 @@ def unsupervised_sweep(sweep_id: str = "", count: int = 100):
 def inference(model_name: str):
     validate_data_directories()
 
-    perform_inference(model_name=model_name, config=TRAIN_CONFIG)
+    perform_inference(model_name=model_name, config=CONFIG)
 
 
 if __name__ == "__main__":
