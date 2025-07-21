@@ -143,16 +143,16 @@ def evaluate_model_performance(
                 clusters = AgglomerativeClustering(
                     n_clusters=k, linkage="ward", compute_distances=False
                 )
-                predicted_labels = clusters.fit_predict(v)
+                predicted_labels = clusters.fit_predict(f)
             elif cluster_algo_name == "kmeans":
                 clusters = KMeans(n_clusters=k, random_state=0, n_init=10)
-                predicted_labels = clusters.fit_predict(v)
+                predicted_labels = clusters.fit_predict(f)
             elif cluster_algo_name == "spectral":
                 # tested options: 'rbf', 'nearest_neighbor'; possibly worth experminenting with different hyp. params here
                 clusters = SpectralClustering(
                     n_clusters=k, random_state=0, affinity="rbf", n_neighbors=20
                 )
-                predicted_labels = clusters.fit_predict(v)
+                predicted_labels = clusters.fit_predict(f)
             else:
                 print(f"Error: Unknown clustering algorithm '{cluster_algo_name}'")
                 continue
@@ -299,9 +299,12 @@ def generate_cluster_video(
     cv2.destroyAllWindows()
 
 
-def perform_inference(model_name, config):
+def perform_inference(model_name: str, config):
     dataset_name = config["train_data"]
-    load_path = f"out/models/{model_name}.pth"
+    if not model_name.endswith(".pth"):
+        model_name += ".pth"
+
+    load_path = f"out/models/{model_name}"
     dataset = load_dataset(dataset_name=dataset_name)
     train_loader, val_loader = get_train_val_loaders(
         dataset=dataset,
