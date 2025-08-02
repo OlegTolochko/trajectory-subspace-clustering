@@ -9,6 +9,7 @@ class SubspaceEstimator(nn.Module):
         embedding_dimension=128,
         num_basis_functions=64,
         subspace_rank=4,
+        dropout_rate=0.0,
     ):
         super(SubspaceEstimator, self).__init__()
         self.num_basis_functions = num_basis_functions
@@ -18,8 +19,10 @@ class SubspaceEstimator(nn.Module):
         self.coeff_net = nn.Sequential(
             nn.Linear(embedding_dimension, 512),
             nn.ReLU(),
+            nn.Dropout(dropout_rate),
             nn.Linear(512, 1024),
             nn.ReLU(),
+            nn.Dropout(dropout_rate),
             nn.Linear(1024, 512),
         )
 
