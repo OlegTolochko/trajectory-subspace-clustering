@@ -91,16 +91,27 @@ def train_model_unsupervised(config, model_save_path="./out/models/"):
         wandb_id = 0
     model_name = f"{config['model_name']}-{timestamp}-{wandb_id}.pth"
 
-    fully_trained_model = full_training_loop(
-        config=config,
-        model=pretrained_model,
-        train_loader=main_train_loader,
-        val_loader=main_val_loader,
-        additional_val_loader=additional_val_loader,
-        device=device,
-        optimizer=optimizer_stage2,
-        scheduler=scheduler_stage2,
-        metrics=metrics_to_log,
+    if config["full_epochs"] > 0:
+        fully_trained_model = full_training_loop(
+            config=config,
+            model=pretrained_model,
+            train_loader=main_train_loader,
+            val_loader=main_val_loader,
+            additional_val_loader=additional_val_loader,
+            device=device,
+            optimizer=optimizer_stage2,
+            scheduler=scheduler_stage2,
+            metrics=metrics_to_log,
+            model_name=model_name,
+        )
+    else:
+        fully_trained_model = pretrained_model
+
+    evaluate_model_performance(
+        fully_trained_model,
+        main_val_loader,
+        config["train_data"],
+        generate_video=config["generate_video_from_last_val_run"],
         model_name=model_name,
     )
 
@@ -124,10 +135,6 @@ def pretraining_loop(config, model, train_loader, device, optimizer, scheduler):
             seq_aug2 = randomly_augment_seq(seq, config=config)
 
             optimizer.zero_grad()
-            mask1 = torch.rand_like(seq[..., :1], device=device) > 0.25
-            mask2 = torch.rand_like(seq[..., :1], device=device) > 0.25
-            seq_aug1 = seq_aug1 * mask1
-            seq_aug2 = seq_aug2 * mask2
             seq_aug1_permuted = seq_aug1.permute(0, 2, 1)
             seq_aug2_permuted = seq_aug2.permute(0, 2, 1)
 
@@ -167,6 +174,10 @@ def full_training_loop(
 ):
     best_model_weights = None
     best_mean_clustering_error = 1  # 1 represents 100% mean clustering error
+    previous_mean_clustering_error = 1
+
+    validation_frequency = config["validation_frequency"]
+
     for epoch in tqdm(range(config["full_epochs"]), desc="Training Full Model"):
         model.train()
         model = model.to(device)
@@ -184,12 +195,6 @@ def full_training_loop(
             optimizer.zero_grad()
             seq_aug1 = randomly_augment_seq(seq, config=config)
             seq_aug2 = randomly_augment_seq(seq, config=config)
-
-            mask1 = torch.rand_like(seq_aug1[..., :1], device=device) > 0.25
-            mask2 = torch.rand_like(seq_aug2[..., :1], device=device) > 0.25
-
-            seq_aug1 = seq_aug1 * mask1
-            seq_aug2 = seq_aug2 * mask2
 
             f1, B1, h_t1 = model(seq_aug1, seq_t)
             f2, B2, h_t2 = model(seq_aug2, seq_t)
@@ -248,19 +253,32 @@ def full_training_loop(
         metrics["feat_diff_loss"] = w_feat_sum / num_seq_processed
         metrics["ortho_loss"] = w_ortho_sum / num_seq_processed
 
-        metrics["mean_clustering_error"] = evaluate_model_performance(
-            model, val_loader, config["train_data"], model_name=model_name
-        )
-        if additional_val_loader:
-            metrics[
-                f"{str.lower(config['additional_val_data'])}_mean_clustering_error"
-            ] = evaluate_model_performance(
-                model, additional_val_loader, config["additional_val_data"]
-            )
+        should_validate = (epoch + 1) % validation_frequency == 0 or (
+            epoch + 1
+        ) == config["full_epochs"]
 
-        if metrics["mean_clustering_error"] < best_mean_clustering_error:
-            best_model_weights = copy.deepcopy(model.state_dict())
-            best_mean_clustering_error = metrics["mean_clustering_error"]
+        if should_validate:
+            metrics["mean_clustering_error"] = evaluate_model_performance(
+                model, val_loader, config["train_data"], model_name=model_name
+            )
+            if additional_val_loader:
+                metrics[
+                    f"{str.lower(config['additional_val_data'])}_mean_clustering_error"
+                ] = evaluate_model_performance(
+                    model, additional_val_loader, config["additional_val_data"]
+                )
+
+            if metrics["mean_clustering_error"] < best_mean_clustering_error:
+                best_model_weights = copy.deepcopy(model.state_dict())
+                best_mean_clustering_error = metrics["mean_clustering_error"]
+                previous_mean_clustering_error = metrics["mean_clustering_error"]
+        else:
+            metrics["mean_clustering_error"] = previous_mean_clustering_error
+            if additional_val_loader:
+                metrics[
+                    f"{str.lower(config['additional_val_data'])}_mean_clustering_error"
+                ] = 0.0
+
         if wandb.run:
             wandb.log(metrics, step=epoch + 1)
 
@@ -271,14 +289,12 @@ def full_training_loop(
             f"Epoch {epoch + 1}/{config['full_epochs']}: InfoNCE Loss: {metrics['infonce_loss']:.4f}, Res Loss: {metrics['residual_loss']:.4f}, Feat Loss: {metrics['feat_diff_loss']:.4f}, Ortho Loss: {metrics['ortho_loss']:.4f}"
         )
 
+        if should_validate:
+            print(
+                f"Validation, Mean Clustering Error: {metrics['mean_clustering_error']:.4f}"
+            )
+
     model.load_state_dict(best_model_weights)
-    evaluate_model_performance(
-        model,
-        val_loader,
-        config["train_data"],
-        generate_video=config["generate_video_from_last_val_run"],
-        model_name=model_name,
-    )
     return model
 
 
