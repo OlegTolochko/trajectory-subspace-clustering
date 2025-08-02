@@ -79,16 +79,27 @@ def train_model(config, model_save_path="./out/models/"):
     wandb_id = wandb.run.id
     model_name = f"{config['model_name']}-{timestamp}-{wandb_id}.pth"
 
-    fully_trained_model = full_training_loop(
-        config=config,
-        model=pretrained_model,
-        train_loader=main_train_loader,
-        val_loader=main_val_loader,
-        additional_val_loader=additional_val_loader,
-        device=device,
-        optimizer=optimizer_stage2,
-        scheduler=scheduler_stage2,
-        metrics=metrics_to_log,
+    if config["full_epochs"] > 0:
+        fully_trained_model = full_training_loop(
+            config=config,
+            model=pretrained_model,
+            train_loader=main_train_loader,
+            val_loader=main_val_loader,
+            additional_val_loader=additional_val_loader,
+            device=device,
+            optimizer=optimizer_stage2,
+            scheduler=scheduler_stage2,
+            metrics=metrics_to_log,
+            model_name=model_name,
+        )
+    else:
+        fully_trained_model = pretrained_model
+
+    evaluate_model_performance(
+        fully_trained_model,
+        main_val_loader,
+        config["train_data"],
+        generate_video=config["generate_video_from_last_val_run"],
         model_name=model_name,
     )
 
@@ -112,11 +123,6 @@ def pretraining_loop(config, model, train_loader, device, optimizer, scheduler):
             seq_norm = randomly_augment_seq(seq=seq_norm, config=config)
 
             optimizer.zero_grad()
-            mask = (
-                torch.rand_like(seq_norm[..., :1], device=device)
-                > config["dropout_rate"]
-            )
-            seq_norm = seq_norm * mask
             # model input: (Batch=P, Channels=2, SeqLen=F)
             seq_permuted = seq_norm.permute(0, 2, 1)  # (P, 2, F)
             f = model.feature_extractor(seq_permuted)
@@ -172,12 +178,6 @@ def full_training_loop(
             seq_norm = randomly_augment_seq(seq=seq_norm, config=config)
 
             optimizer.zero_grad()
-            mask = (
-                torch.rand_like(seq_norm[..., :1], device=device)
-                > config["dropout_rate"]
-            )
-            seq_norm = seq_norm * mask
-
             f, B, h_t = model(seq_norm, seq_t)
 
             B_flat = B.view(num_points, -1)  # (P, 2F*rank)
