@@ -27,9 +27,9 @@ class FeatureExtractor(nn.Module):
         self.max_pool = nn.AdaptiveMaxPool1d(output_size=1)
 
         self.linear_layers = nn.Sequential(
-            nn.Linear(512, 128, dropout_rate=dropout_rate),
+            nn.Linear(512, 128),
             nn.ReLU(),
-            nn.Linear(128, 128, dropout_rate=dropout_rate),
+            nn.Linear(128, 128),
             nn.ReLU(),
         )
 

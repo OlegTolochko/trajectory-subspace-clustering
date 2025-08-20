@@ -143,20 +143,19 @@ def evaluate_model_performance(
                 clusters = AgglomerativeClustering(
                     n_clusters=k, linkage="ward", compute_distances=False
                 )
-                predicted_labels = clusters.fit_predict(f)
+                predicted_labels = clusters.fit_predict(v)
             elif cluster_algo_name == "kmeans":
                 clusters = KMeans(n_clusters=k, random_state=0, n_init=10)
-                predicted_labels = clusters.fit_predict(f)
+                predicted_labels = clusters.fit_predict(v)
             elif cluster_algo_name == "spectral":
                 # tested options: 'rbf', 'nearest_neighbor'; possibly worth experminenting with different hyp. params here
                 clusters = SpectralClustering(
                     n_clusters=k, random_state=0, affinity="rbf", n_neighbors=20
                 )
-                predicted_labels = clusters.fit_predict(f)
+                predicted_labels = clusters.fit_predict(v)
             else:
                 print(f"Error: Unknown clustering algorithm '{cluster_algo_name}'")
                 continue
-
 
             if generate_video and sequence["seq_type"][0] == "full":
                 seq_unnormalized = sequence["unnormalized_trajectories"]

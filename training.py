@@ -11,7 +11,7 @@ from tqdm import tqdm
 import wandb
 
 from models.trajectory_embedder import TrajectoryEmbeddingModel
-from losses import L_FeatDiff, L_InfoNCE, L_Residual, L_orthogonal
+from losses import L_FeatDiff, L_InfoNCE, L_Residual, L_orthogonal, L_InfoNCE_paper_style
 from datasets import load_dataset, get_train_val_loaders, randomly_augment_seq
 from inference import evaluate_model_performance
 
@@ -33,6 +33,7 @@ def train_model(config, model_save_path="./out/models/"):
         strict_sequence_train_val_split=config["strict_sequence_train_val_split"],
         include_partial_sequences_train=config["include_partial_sequences_train"],
         include_partial_sequences_val=config["include_partial_sequences_val"],
+        random_state=config["random_state"]
     )
     additional_val_loader = None
     if config["additional_val_data"]:
@@ -76,7 +77,10 @@ def train_model(config, model_save_path="./out/models/"):
     pretrained_model = pretrained_model.to(device)
 
     timestamp = datetime.now().strftime("%Y%m%dT%H%M%S")
-    wandb_id = wandb.run.id
+    if wandb.run:
+        wandb_id = wandb.run.id
+    else:
+        wandb_id = 0
     model_name = f"{config['model_name']}-{timestamp}-{wandb_id}.pth"
 
     if config["full_epochs"] > 0:
@@ -249,8 +253,9 @@ def full_training_loop(
         if metrics["mean_clustering_error"] < best_mean_clustering_error:
             best_model_weights = copy.deepcopy(model.state_dict())
             best_mean_clustering_error = metrics["mean_clustering_error"]
-
-        wandb.log(metrics, step=epoch + 1)
+ 
+        if wandb.run:
+            wandb.log(metrics, step=epoch + 1)
 
         print(
             f"Full Training Epoch {epoch + 1}/{config['full_epochs']}, Avg Loss: {metrics['total_loss']:.4f}"

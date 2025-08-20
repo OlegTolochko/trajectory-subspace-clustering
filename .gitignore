@@ -1,5 +1,6 @@
 data/
 out/models/*
+out/multiple_runs_results/*
 !out/models/model-unsupervised.pth
 
 __pycache__/

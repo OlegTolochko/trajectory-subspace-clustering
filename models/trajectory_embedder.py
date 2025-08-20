@@ -1,6 +1,6 @@
 import torch.nn as nn
 import torch
-from .feature_extractor import FeatureExtractor
+from .feature_extractor import FeatureExtractor, FeatureExtractorTransformer
 from .subspace_estimator import SubspaceEstimator
 
 

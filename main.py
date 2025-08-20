@@ -8,40 +8,9 @@ from training import train_model
 from training_unsupervised import train_model_unsupervised
 from sweep import load_sweep_config
 from inference import perform_inference
+from config import CONFIG
 
 app = typer.Typer()
-
-# base setup according to paper
-CONFIG = {
-    "model_name": "model",
-    "pretraining_epochs": 25,
-    "full_epochs": 40,
-    "learning_rate": 0.00025,
-    "weight_decay": 1e-5,
-    "scheduler_gamma": 0.999,
-    "batch_size": 1,
-    "dropout_rate": 0.1,
-    "validation_split": 1.0,  # if set to 1.0, the val set will be the full training set
-    "include_partial_sequences_train": True,  # Dataset also includes partial versions of sequences, True to include
-    "include_partial_sequences_val": True,
-    "strict_sequence_train_val_split": True,  # enforces, that associated partial sequences are not mixed between train and val data
-    "train_data": "Hopkins155",  # Options: Hopkins155, Hopkins12, KT3DMoSeg
-    "additional_val_data": None,  # Options: None, Hopkins155, Hopkins12, KT3DMoSeg
-    "generate_video_from_last_val_run": False,  # Generates video of point clusters on top of original video in last val run
-    "device": "cuda",  # Options: cuda, cpu, mps
-    "alph0": False,  # zero-out first part of basis-function term
-    "use_sequence_randomization": False,  # randomize sequences for a class to enforce reconstruction of an. sequence
-    "w_info": 1.0,  # weight for InfoNCE loss
-    "w_res": 0.5,  # weight for residual loss
-    "w_feat": 0.5,  # weight for feature difference loss
-    "w_ortho": 0.0,  # weight for orthogonality loss
-    "augmentation_individual_max_shift_amount": 0.0,  # Maximum training individual data point shift amount, range 0-1, 0 = no augmetation
-    "augmentation_individual_shift_percent": 0.0,  # Percentage of training data points to shift, range 0-1, 0 = no augmetation
-    "augmentation_occlusion_percent": 0.0,  # Percentage of training data points to occlude, range 0-1, 0 = no augmetation
-    "augmentation_full_max_shift_amount": 0.0,  # Maximum shift amount for shifting whole sequence, range 0-1, 0 = no augmetation
-    "augmentation_chunkwise_occlusion_percent": 0.0,  # Percentage of points to occlude chunkwise
-    "augmentation_chunkwise_occlusion_max_chunk_amount": 0,  # Maximum amount of chunks for chunkwise occlusion
-}
 
 
 def setup_directories():
@@ -136,6 +105,56 @@ def inference(model_name: str):
 
     perform_inference(model_name=model_name, config=CONFIG)
 
+
+def run_flexible_config_experiment(param_config, num_runs=25, name_prefix="flexible"):
+    """
+    Python function version for programmatic use.
+    
+    Args:
+        param_config: Dict with parameter names as keys and lists of values
+                     e.g., {"param1": [val1, val2], "param2": [val3, val4]}
+        num_runs: Number of runs per configuration
+        name_prefix: Prefix for naming experiments
+    
+    Returns:
+        List of results for each configuration
+    """
+    import itertools
+    from multiple_runs import run_multiple_experiments
+    
+    param_names = list(param_config.keys())
+    param_values = list(param_config.values())
+    all_combinations = list(itertools.product(*param_values))
+    
+    all_results = []
+    
+    for i, combination in enumerate(all_combinations, 1):
+        new_config = CONFIG.copy()
+        param_dict = {}
+        
+        for param_name, value in zip(param_names, combination):
+            new_config[param_name] = value
+            param_dict[param_name] = value
+        
+        param_str = "_".join([f"{name}_{value}" for name, value in param_dict.items()])
+        name = f"_{name_prefix}_{param_str}"
+        
+        print(f"Running configuration {i}/{len(all_combinations)}: {param_dict}")
+        
+        results = run_multiple_experiments(
+            num_runs=num_runs,
+            unsupervised=False,
+            config=new_config,
+            name=name
+        )
+        
+        all_results.append({
+            "config_id": i,
+            "parameters": param_dict,
+            "results": results
+        })
+    
+    return all_results
 
 if __name__ == "__main__":
     app()
