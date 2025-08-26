@@ -1,7 +1,7 @@
 # base setup according to paper
 
 CONFIG = {
-    """Base setup (unspecified refers to not specified in original paper):"""
+    # Base setup (unspecified refers to not specified in original paper):
     "model_name": "model",
     "pretraining_epochs": 50,  # unspecified
     "full_epochs": 50,  # unspecified
@@ -15,8 +15,9 @@ CONFIG = {
     "w_res": 1.0,  # unspecified; weight for residual loss
     "w_feat": 1.0,  # unspecified; weight for feature difference loss
     "device": "cuda",  # Options: cuda, cpu, mps
-    """Additional adjustable parameters:"""
-    "transformer_encoder_feature_extractor": False,  # If True utilizes different Feature Extractor with an TransformerEncoder layer
+
+    # Additional adjustable parameters:
+    "transformer_encoder_feature_extractor": True,  # If True utilizes different Feature Extractor with an TransformerEncoder layer
     "validation_frequency": 1,  # set to 1 if validation should be performed every single time
     "include_partial_sequences_train": True,  # Train set also includes partial versions of sequences, True to include
     "include_partial_sequences_val": True,  # Validation set also includes partial versions of sequences, True to include
@@ -25,7 +26,8 @@ CONFIG = {
     "additional_val_data": None,  # Options: None, Hopkins155, Hopkins12, KT3DMoSeg
     "generate_video_from_last_val_run": False,  # Generates video of point clusters on top of original video in last val run
     "w_ortho": 0.0,  # weight for orthogonality loss
-    """Augmentation Framework:"""
+
+    # Augmentation Framework:
     "augmentation_individual_max_shift_amount": 0.0,  # Maximum training individual data point shift amount, range 0-1, 0 = no augmetation
     "augmentation_individual_shift_percent": 0.0,  # Percentage of training data points to shift, range 0-1, 0 = no augmetation
     "augmentation_trajectory_individual_shift_percent": 0.0,
