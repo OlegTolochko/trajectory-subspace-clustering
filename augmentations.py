@@ -2,6 +2,26 @@ import torch
 import random
 import numpy as np
 
+
+def individual_point_shifting(seq_x, max_shift_amount=0.1, shift_percent=0.1):
+    seq_x_shifted = seq_x.clone()
+
+    shift_mask = (
+        torch.rand((seq_x.shape[0], seq_x.shape[1]), device=seq_x.device)
+        < shift_percent
+    )
+
+    shifts = torch.empty_like(seq_x)
+    shifts.uniform_(-max_shift_amount, max_shift_amount)
+
+    shift_mask_expanded = shift_mask.unsqueeze(-1).expand(-1, -1, 2)
+    seq_x_shifted[shift_mask_expanded] += shifts[shift_mask_expanded]
+
+    seq_x_shifted = torch.clamp(seq_x_shifted, 0, 1)
+
+    return seq_x_shifted
+
+
 def trajectory_point_shifting(seq_x, max_shift_amount=0.1, shift_percent=0.1):
     seq_x_shifted = seq_x.clone()
 
@@ -24,51 +44,6 @@ def trajectory_point_shifting(seq_x, max_shift_amount=0.1, shift_percent=0.1):
 
     return seq_x_shifted
 
-
-def individual_point_shifting(seq_x, max_shift_amount=0.1, shift_percent=0.1):
-    seq_x_shifted = seq_x.clone()
-    
-    shift_mask = torch.rand((seq_x.shape[0], seq_x.shape[1]), device=seq_x.device) < shift_percent
-    
-    shifts = torch.empty_like(seq_x)
-    shifts.uniform_(-max_shift_amount, max_shift_amount)
-    
-    shift_mask_expanded = shift_mask.unsqueeze(-1).expand(-1, -1, 2)
-    seq_x_shifted[shift_mask_expanded] += shifts[shift_mask_expanded]
-    
-    seq_x_shifted = torch.clamp(seq_x_shifted, 0, 1)
-    
-    return seq_x_shifted
-
-
-def occlude_seq(seq_x, occlusion_percent):
-    seq_x_occluded = seq_x.clone()
-    num_points = seq_x.shape[0]
-    device = seq_x.device
-
-    occlusion_mask = torch.rand(num_points, device=device) < occlusion_percent
-
-    i = 0
-    while i < num_points:
-        if not occlusion_mask[i]:
-            i += 1
-            continue
-        start_idx = i
-
-        while i < num_points and occlusion_mask[i]:
-            i += 1
-        end_idx = i - 1
-        source_idx = start_idx - 1
-
-        if start_idx == 0:
-            if end_idx == num_points - 1:
-                continue
-            source_idx = end_idx + 1
-
-        replacement_tensor = seq_x[source_idx]
-        seq_x_occluded[start_idx : end_idx + 1] = replacement_tensor
-
-    return seq_x_occluded
 
 def trajectory_shifting(seq, max_shift_amount, shift_percent):
     seq_x_shifted = seq.clone()
@@ -153,6 +128,36 @@ def occlude_seq_chunkwise(seq, occlusion_percent, max_num_chunks):
     return seq_occluded
 
 
+def occlude_seq(seq_x, occlusion_percent):
+    seq_x_occluded = seq_x.clone()
+    num_points = seq_x.shape[0]
+    device = seq_x.device
+
+    occlusion_mask = torch.rand(num_points, device=device) < occlusion_percent
+
+    i = 0
+    while i < num_points:
+        if not occlusion_mask[i]:
+            i += 1
+            continue
+        start_idx = i
+
+        while i < num_points and occlusion_mask[i]:
+            i += 1
+        end_idx = i - 1
+        source_idx = start_idx - 1
+
+        if start_idx == 0:
+            if end_idx == num_points - 1:
+                continue
+            source_idx = end_idx + 1
+
+        replacement_tensor = seq_x[source_idx]
+        seq_x_occluded[start_idx : end_idx + 1] = replacement_tensor
+
+    return seq_x_occluded
+
+
 def randomly_augment_seq(seq, config):
     seq_augmented = seq
     # Individual Point Shifting:
@@ -171,7 +176,7 @@ def randomly_augment_seq(seq, config):
             max_shift_amount=max_individual_shift_amount,
             shift_percent=individual_shift_percent,
         )
-        
+
     # Trajectory-wise Point Shifting:
     if config["augmentation_trajectory_individual_shift_percent"] > 0:
         individual_shift_percentages = np.arange(
@@ -188,7 +193,7 @@ def randomly_augment_seq(seq, config):
             max_shift_amount=max_individual_shift_amount,
             shift_percent=individual_shift_percent,
         )
-    
+
     # Trajectory-wise Shifting:
     if config["augmentation_trajectory_shift_percent"] > 0:
         individual_shift_percentages = np.arange(
