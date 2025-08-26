@@ -9,6 +9,7 @@ class SubspaceEstimator(nn.Module):
         embedding_dimension=128,
         num_basis_functions=64,
         subspace_rank=4,
+        dropout_rate=0.0,
     ):
         super(SubspaceEstimator, self).__init__()
         self.num_basis_functions = num_basis_functions
@@ -18,8 +19,10 @@ class SubspaceEstimator(nn.Module):
         self.coeff_net = nn.Sequential(
             nn.Linear(embedding_dimension, 512),
             nn.ReLU(),
+            nn.Dropout(dropout_rate),
             nn.Linear(512, 1024),
             nn.ReLU(),
+            nn.Dropout(dropout_rate),
             nn.Linear(1024, 512),
         )
 
@@ -38,10 +41,7 @@ class SubspaceEstimator(nn.Module):
         beta_reshaped = self.beta_basis.view(1, 1, -1)  # (1,1,N=64)
         gamma_reshaped = self.gamma_basis.view(1, 1, -1)  # (1,1,N=64)
 
-        if self.alph0:
-            term1 = 1
-        else:
-            term1 = torch.exp(-((alpha_reshaped * (t_reshaped - mu_reshaped)) ** 2))
+        term1 = torch.exp(-((alpha_reshaped * (t_reshaped - mu_reshaped)) ** 2))
         term2 = torch.cos(beta_reshaped * t_reshaped + gamma_reshaped)
         h_t = term1 * term2
         return h_t  # (Batch, SequenceLength, N=64)

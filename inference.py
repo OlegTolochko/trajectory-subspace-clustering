@@ -14,7 +14,7 @@ import numpy as np
 import cv2
 
 
-def load_model(load_path="out/models/hopk155_100_200_split_incfeat_ortho_alph0.pt"):
+def load_model(load_path="model_supervised.pth"):
     model = TrajectoryEmbeddingModel()
 
     target_device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -143,20 +143,19 @@ def evaluate_model_performance(
                 clusters = AgglomerativeClustering(
                     n_clusters=k, linkage="ward", compute_distances=False
                 )
-                predicted_labels = clusters.fit_predict(f)
+                predicted_labels = clusters.fit_predict(v)
             elif cluster_algo_name == "kmeans":
                 clusters = KMeans(n_clusters=k, random_state=0, n_init=10)
-                predicted_labels = clusters.fit_predict(f)
+                predicted_labels = clusters.fit_predict(v)
             elif cluster_algo_name == "spectral":
                 # tested options: 'rbf', 'nearest_neighbor'; possibly worth experminenting with different hyp. params here
                 clusters = SpectralClustering(
                     n_clusters=k, random_state=0, affinity="rbf", n_neighbors=20
                 )
-                predicted_labels = clusters.fit_predict(f)
+                predicted_labels = clusters.fit_predict(v)
             else:
                 print(f"Error: Unknown clustering algorithm '{cluster_algo_name}'")
                 continue
-
 
             if generate_video and sequence["seq_type"][0] == "full":
                 seq_unnormalized = sequence["unnormalized_trajectories"]

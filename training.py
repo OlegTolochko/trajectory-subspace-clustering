@@ -12,7 +12,8 @@ import wandb
 
 from models.trajectory_embedder import TrajectoryEmbeddingModel
 from losses import L_FeatDiff, L_InfoNCE, L_Residual, L_orthogonal
-from datasets import load_dataset, get_train_val_loaders, randomly_augment_seq
+from datasets import load_dataset, get_train_val_loaders
+from augmentations import randomly_augment_seq
 from inference import evaluate_model_performance
 
 
@@ -33,6 +34,7 @@ def train_model(config, model_save_path="./out/models/"):
         strict_sequence_train_val_split=config["strict_sequence_train_val_split"],
         include_partial_sequences_train=config["include_partial_sequences_train"],
         include_partial_sequences_val=config["include_partial_sequences_val"],
+        random_state=config["random_state"],
     )
     additional_val_loader = None
     if config["additional_val_data"]:
@@ -46,7 +48,9 @@ def train_model(config, model_save_path="./out/models/"):
 
     device = torch.device(config["device"])
 
-    model = TrajectoryEmbeddingModel(alph0=config["alph0"])
+    model = TrajectoryEmbeddingModel(
+        include_transformer_encdoder=config["transformer_encoder_feature_extractor"]
+    )
     model = model.to(device)
 
     optimizer_stage1 = optim.Adam(
@@ -76,19 +80,33 @@ def train_model(config, model_save_path="./out/models/"):
     pretrained_model = pretrained_model.to(device)
 
     timestamp = datetime.now().strftime("%Y%m%dT%H%M%S")
-    wandb_id = wandb.run.id
+    if wandb.run:
+        wandb_id = wandb.run.id
+    else:
+        wandb_id = 0
     model_name = f"{config['model_name']}-{timestamp}-{wandb_id}.pth"
 
-    fully_trained_model = full_training_loop(
-        config=config,
-        model=pretrained_model,
-        train_loader=main_train_loader,
-        val_loader=main_val_loader,
-        additional_val_loader=additional_val_loader,
-        device=device,
-        optimizer=optimizer_stage2,
-        scheduler=scheduler_stage2,
-        metrics=metrics_to_log,
+    if config["full_epochs"] > 0:
+        fully_trained_model = full_training_loop(
+            config=config,
+            model=pretrained_model,
+            train_loader=main_train_loader,
+            val_loader=main_val_loader,
+            additional_val_loader=additional_val_loader,
+            device=device,
+            optimizer=optimizer_stage2,
+            scheduler=scheduler_stage2,
+            metrics=metrics_to_log,
+            model_name=model_name,
+        )
+    else:
+        fully_trained_model = pretrained_model
+
+    evaluate_model_performance(
+        fully_trained_model,
+        main_val_loader,
+        config["train_data"],
+        generate_video=config["generate_video_from_last_val_run"],
         model_name=model_name,
     )
 
@@ -112,11 +130,6 @@ def pretraining_loop(config, model, train_loader, device, optimizer, scheduler):
             seq_norm = randomly_augment_seq(seq=seq_norm, config=config)
 
             optimizer.zero_grad()
-            mask = (
-                torch.rand_like(seq_norm[..., :1], device=device)
-                > config["dropout_rate"]
-            )
-            seq_norm = seq_norm * mask
             # model input: (Batch=P, Channels=2, SeqLen=F)
             seq_permuted = seq_norm.permute(0, 2, 1)  # (P, 2, F)
             f = model.feature_extractor(seq_permuted)
@@ -165,33 +178,20 @@ def full_training_loop(
         w_feat_sum = 0.0
         w_ortho_sum = 0.0
         for batch_data in train_loader:
-            seq_norm = batch_data["trajectories"].to(device).squeeze(0)  # (P, F, 2)
+            seq_train = batch_data["trajectories"].to(device).squeeze(0)  # (P, F, 2)
             seq_labels = batch_data["labels"].to(device).squeeze(0)  # (P,)
             seq_t = batch_data["times"].to(device).squeeze(0)  # (P, F)
-            num_points = seq_norm.shape[0]
-            seq_norm = randomly_augment_seq(seq=seq_norm, config=config)
+            num_points = seq_train.shape[0]
+            seq_train = randomly_augment_seq(seq=seq_train, config=config)
 
             optimizer.zero_grad()
-            mask = (
-                torch.rand_like(seq_norm[..., :1], device=device)
-                > config["dropout_rate"]
-            )
-            seq_norm = seq_norm * mask
-
-            f, B, h_t = model(seq_norm, seq_t)
+            f, B, h_t = model(seq_train, seq_t)
 
             B_flat = B.view(num_points, -1)  # (P, 2F*rank)
 
             f_norm = F.normalize(f, dim=1)
             B_flat_norm = F.normalize(B_flat, dim=1)
             v = torch.cat((f_norm, B_flat_norm), dim=1)
-
-            if config["use_sequence_randomization"]:
-                seq_train = randomize_sequences_for_class(
-                    seq_x=seq_norm, seq_labels=seq_labels, epoch=epoch, device=device
-                )
-            else:
-                seq_train = seq_norm
 
             x_reconstructed = reconstruct_x(seq_train, B)  # (P, F, 2)
             x_reconstructed_permuted = x_reconstructed.permute(0, 2, 1)
@@ -250,7 +250,8 @@ def full_training_loop(
             best_model_weights = copy.deepcopy(model.state_dict())
             best_mean_clustering_error = metrics["mean_clustering_error"]
 
-        wandb.log(metrics, step=epoch + 1)
+        if wandb.run:
+            wandb.log(metrics, step=epoch + 1)
 
         print(
             f"Full Training Epoch {epoch + 1}/{config['full_epochs']}, Avg Loss: {metrics['total_loss']:.4f}"
@@ -283,23 +284,3 @@ def reconstruct_x(x_original, B_estimated):
         except Exception as e:
             print(f"Error occurred in x reconstruction: {e}")
     return x_reconst
-
-
-def randomize_sequences_for_class(seq_x, seq_labels, epoch, device):
-    generator = torch.Generator(device=device)
-    generator.manual_seed(42 + epoch)
-
-    seq_x_train = seq_x.clone()
-
-    if torch.rand(1, generator=generator, device=device) > 0.5:
-        unique_labels = torch.unique(seq_labels)
-        for label in unique_labels:
-            class_indices = seq_labels == label
-            if class_indices.sum() > 1:
-                seq_class = seq_x[class_indices]
-                num_seq_class = seq_class.size(0)
-                idx = torch.randperm(num_seq_class, generator=generator, device=device)
-                seq_class_shuffled = seq_class[idx]
-                seq_x_train[class_indices] = seq_class_shuffled
-
-    return seq_x_train

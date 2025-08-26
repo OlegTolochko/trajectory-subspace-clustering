@@ -33,7 +33,9 @@ class Hopkins155(Dataset):
                 num_points = coords_2PF.shape[1]
                 num_frames = coords_2PF.shape[2]
                 trajectories = np.transpose(coords_2PF, (1, 2, 0))  # (P, F, 2)
-                base_time = torch.arange(num_frames)
+                base_time = torch.arange(num_frames, dtype=torch.float32) / (
+                    num_frames - 1
+                )
                 time_vectors = base_time.expand(num_points, -1)
 
                 y_coords_2PF = y_data_load[0:2, :, :]  # (2, P, F)
@@ -194,12 +196,22 @@ class KT3DMoSeg(Dataset):
                         labels_load = mat_data_struct[0, 0]["GtLabel"].reshape(-1)
 
                     coords = trajectories_load[0:2]
-                    scale = float(np.hypot(1242, 375))
-                    coords = (coords - 0.5 * scale) / (0.5 * scale)
 
                     num_points = coords.shape[1]
                     num_frames = coords.shape[2]
                     coords = np.transpose(coords, (1, 2, 0))  # (P, F, 2)
+
+                    x_coords = coords[:, :, 0]
+                    y_coords = coords[:, :, 1]
+
+                    x_min, x_max = np.min(x_coords), np.max(x_coords)
+                    y_min, y_max = np.min(y_coords), np.max(y_coords)
+
+                    x_range = x_max - x_min if x_max != x_min else 1.0
+                    y_range = y_max - y_min if y_max != y_min else 1.0
+
+                    coords[:, :, 0] = (x_coords - x_min) / x_range
+                    coords[:, :, 1] = (y_coords - y_min) / y_range
 
                     base_time = torch.arange(num_frames)
                     time_vectors = base_time.unsqueeze(0).expand(num_points, -1)
@@ -250,176 +262,6 @@ class KT3DMoSeg(Dataset):
         }
 
 
-def shift_seq(seq_x, max_shift_amount=0.1, shift_percent=0.1):
-    seq_x_shifted = seq_x.clone()
-
-    num_points = seq_x.shape[0]
-
-    shift_mask = torch.rand(num_points, device=seq_x.device) < shift_percent
-    num_points_to_shift = torch.sum(shift_mask).item()
-
-    if num_points_to_shift > 0:
-        shifts = torch.empty(
-            (num_points_to_shift, seq_x.shape[1], seq_x.shape[2]),
-            device=seq_x.device,
-            dtype=seq_x.dtype,
-        )
-        shifts.uniform_(-max_shift_amount, max_shift_amount)
-
-        seq_x_shifted[shift_mask] += shifts
-
-        seq_x_shifted = torch.clamp(seq_x_shifted, 0, 1)
-
-    return seq_x_shifted
-
-
-def occlude_seq(seq_x, occlusion_percent):
-    seq_x_occluded = seq_x.clone()
-    num_points = seq_x.shape[0]
-    device = seq_x.device
-
-    occlusion_mask = torch.rand(num_points, device=device) < occlusion_percent
-
-    i = 0
-    while i < num_points:
-        if not occlusion_mask[i]:
-            i += 1
-            continue
-        start_idx = i
-
-        while i < num_points and occlusion_mask[i]:
-            i += 1
-        end_idx = i - 1
-        source_idx = start_idx - 1
-
-        if start_idx == 0:
-            if end_idx == num_points - 1:
-                continue
-            source_idx = end_idx + 1
-
-        replacement_tensor = seq_x[source_idx]
-        seq_x_occluded[start_idx : end_idx + 1] = replacement_tensor
-
-    return seq_x_occluded
-
-
-def shift_all_trajectories(seq, max_shift_amount=0.3):
-    seq_shifted = seq.clone()
-
-    shift_y = random.uniform(-max_shift_amount, max_shift_amount)
-    shift_x = random.uniform(-max_shift_amount, max_shift_amount)
-    seq_shifted[:, :, 0] += shift_x
-    seq_shifted[:, :, 1] += shift_y
-    seq_shifted = torch.clamp(seq_shifted, 0, 1)
-
-    return seq_shifted
-
-
-def occlude_seq_chunkwise(seq, occlusion_percent, max_num_chunks):
-    seq_occluded = seq.clone()
-    num_points = seq.shape[0]
-    device = seq.device
-
-    occlusion_mask = torch.zeros(num_points, dtype=torch.bool, device=device)
-
-    occlusion_positions = torch.randint(0, num_points, (max_num_chunks,), device=device)
-
-    max_length_per_chunk = int(
-        num_points * (occlusion_percent * 2 / max_num_chunks + 0.01)
-    )
-    if max_length_per_chunk == 0:
-        max_length_per_chunk = 1
-
-    chunk_lengths = torch.randint(
-        1, max_length_per_chunk + 1, (max_num_chunks,), device=device
-    )
-
-    for i in range(max_num_chunks):
-        start = occlusion_positions[i].item()
-        length = chunk_lengths[i].item()
-        end = min(start + length, num_points)
-        occlusion_mask[start:end] = True
-
-    i = 0
-    while i < num_points:
-        if not occlusion_mask[i]:
-            i += 1
-            continue
-        start_idx = i
-
-        while i < num_points and occlusion_mask[i]:
-            i += 1
-        end_idx = i - 1
-        source_idx = start_idx - 1
-
-        if start_idx == 0:
-            if end_idx == num_points - 1:
-                continue
-            source_idx = end_idx + 1
-
-        replacement_tensor = seq[source_idx]
-        seq_occluded[start_idx : end_idx + 1] = replacement_tensor
-
-    return seq_occluded
-
-
-def randomly_augment_seq(seq, config):
-    seq_augmented = seq
-    if config["augmentation_individual_shift_percent"] > 0:
-        individual_shift_percentages = np.arange(
-            0, config["augmentation_individual_shift_percent"], 0.05
-        )
-        max_individual_shift_amounts = np.arange(
-            0, config["augmentation_individual_max_shift_amount"], 0.05
-        )
-        individual_shift_percent = random.choice(individual_shift_percentages)
-        max_individual_shift_amount = random.choice(max_individual_shift_amounts)
-
-        seq_augmented = shift_seq(
-            seq_x=seq_augmented,
-            max_shift_amount=max_individual_shift_amount,
-            shift_percent=individual_shift_percent,
-        )
-
-    if config["augmentation_full_max_shift_amount"] > 0:
-        max_full_shift_amounts = np.arange(
-            0, config["augmentation_full_max_shift_amount"], 0.05
-        )
-        max_full_shift_amount = random.choice(max_full_shift_amounts)
-
-        seq_augmented = shift_all_trajectories(
-            seq=seq_augmented, max_shift_amount=max_full_shift_amount
-        )
-
-    if config["augmentation_chunkwise_occlusion_percent"] > 0:
-        chunkwise_occlusion_percentages = np.arange(
-            0, config["augmentation_chunkwise_occlusion_percent"], 0.05
-        )
-        chunkwise_occlusion_max_chunk_amounts = np.arange(
-            1, config["augmentation_chunkwise_occlusion_max_chunk_amount"] + 1, 1
-        )
-        chunkwise_occlusion_percent = random.choice(chunkwise_occlusion_percentages)
-        chunkwise_occlusion_max_num_chunks = random.choice(
-            chunkwise_occlusion_max_chunk_amounts
-        )
-
-        seq_augmented = occlude_seq_chunkwise(
-            seq_augmented,
-            occlusion_percent=chunkwise_occlusion_percent,
-            max_num_chunks=chunkwise_occlusion_max_num_chunks,
-        )
-
-    if config["augmentation_occlusion_percent"] > 0:
-        occlusion_percentages = np.arange(
-            0, config["augmentation_occlusion_percent"], 0.05
-        )
-        occlusion_percent = random.choice(occlusion_percentages)
-
-        seq_augmented = occlude_seq(seq_augmented, occlusion_percent=occlusion_percent)
-
-    return seq_augmented
-
-
 def load_dataset(dataset_name):
     if str.lower(dataset_name) == "hopkins155":
         return Hopkins155()
@@ -437,6 +279,7 @@ def get_train_val_loaders(
     strict_sequence_train_val_split,
     include_partial_sequences_train,
     include_partial_sequences_val,
+    random_state: int | None = 42,
 ):
     if val_split_size == 1.0:
         train_loader = DataLoader(dataset, shuffle=True)
@@ -460,7 +303,7 @@ def get_train_val_loaders(
                 full_sequences.append(seq_name)
 
         train_seq_names, val_seq_names = train_test_split(
-            full_sequences, test_size=val_split_size, random_state=42
+            full_sequences, test_size=val_split_size, random_state=random_state
         )
 
         train_indices = []
@@ -488,7 +331,7 @@ def get_train_val_loaders(
 
     else:
         train_dataset, val_dataset = train_test_split(
-            range(len(dataset)), test_size=val_split_size, random_state=42
+            range(len(dataset)), test_size=val_split_size, random_state=random_state
         )
         train_dataset = Subset(dataset, train_dataset)
         val_dataset = Subset(dataset, val_dataset)

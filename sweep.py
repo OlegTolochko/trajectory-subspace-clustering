@@ -1,12 +1,11 @@
 def load_sweep_config(
     method="bayes",
-    optimize_loss_weights=True,
+    optimize_loss_weights=False,
     use_individual_shift_augmentation=True,
     use_full_shift_augmentation=True,
     occlude_points=True,
     occlude_chunkwise=True,
-    optimize_lr=True,
-    optimize_dropout_rate=True,
+    optimize_lr=False,
 ):
     sweep_config = {"method": method}
 
@@ -62,13 +61,6 @@ def load_sweep_config(
                 "learning_rate": {"values": [0.00025, 0.0001]},
                 "weight_decay": {"values": [2.5e-5, 1e-5, 5e-6, 1e-6]},
                 "scheduler_gamma": {"values": [0.9995, 0.999]},
-            }
-        )
-
-    if optimize_dropout_rate:
-        parameters_dict.update(
-            {
-                "dropout_rate": {"values": [0.0, 0.05, 0.1]},
             }
         )
 

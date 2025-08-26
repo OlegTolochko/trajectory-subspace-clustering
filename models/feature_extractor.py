@@ -4,27 +4,33 @@ import torch.nn.functional as F
 
 
 class FeatureExtractor(nn.Module):
-    def __init__(self):
+    def __init__(self, dropout_rate=0):
         super(FeatureExtractor, self).__init__()
         self.conv_layers = nn.Sequential(
             nn.Conv1d(
                 in_channels=2, out_channels=64, kernel_size=3, stride=1, padding=1
             ),
             nn.ReLU(),
+            nn.Dropout1d(dropout_rate),
             nn.Conv1d(
                 in_channels=64, out_channels=128, kernel_size=3, stride=1, padding=1
             ),
             nn.ReLU(),
+            nn.Dropout1d(dropout_rate),
             nn.Conv1d(
                 in_channels=128, out_channels=512, kernel_size=3, stride=1, padding=1
             ),
             nn.ReLU(),
+            nn.Dropout1d(dropout_rate),
         )
 
         self.max_pool = nn.AdaptiveMaxPool1d(output_size=1)
 
         self.linear_layers = nn.Sequential(
-            nn.Linear(512, 128), nn.ReLU(), nn.Linear(128, 128), nn.ReLU()
+            nn.Linear(512, 128),
+            nn.ReLU(),
+            nn.Linear(128, 128),
+            nn.ReLU(),
         )
 
     def forward(self, x):
@@ -34,5 +40,52 @@ class FeatureExtractor(nn.Module):
         x = x.squeeze(-1)
 
         x = self.linear_layers(x)
+        x_norm = F.normalize(x, p=2, dim=1)
+        return x_norm
+
+
+class FeatureExtractorTransformer(nn.Module):
+    def __init__(self, dropout_rate=0):
+        super(FeatureExtractorTransformer, self).__init__()
+        self.conv_layers = nn.Sequential(
+            nn.Conv1d(
+                in_channels=2, out_channels=64, kernel_size=3, stride=1, padding=1
+            ),
+            nn.ReLU(),
+            nn.Dropout1d(dropout_rate),
+            nn.Conv1d(
+                in_channels=64, out_channels=128, kernel_size=3, stride=1, padding=1
+            ),
+            nn.ReLU(),
+            nn.Dropout1d(dropout_rate),
+            nn.Conv1d(
+                in_channels=128, out_channels=512, kernel_size=3, stride=1, padding=1
+            ),
+            nn.ReLU(),
+            nn.Dropout1d(dropout_rate),
+        )
+
+        self.max_pool = nn.AdaptiveMaxPool1d(output_size=1)
+
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model=512,
+            nhead=8,
+            dim_feedforward=1024,
+            dropout=dropout_rate,
+            batch_first=True,
+        )
+        # num layers may be adjusted:
+        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=1)
+
+        self.final_projection = nn.Linear(512, 128)
+
+    def forward(self, x):
+        x = self.conv_layers(x)
+
+        x = self.max_pool(x)
+        x = x.squeeze(-1)
+
+        x = self.transformer(x)
+        x = self.final_projection(x)
         x_norm = F.normalize(x, p=2, dim=1)
         return x_norm
