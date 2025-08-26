@@ -14,7 +14,7 @@ import numpy as np
 import cv2
 
 
-def load_model(load_path="out/models/hopk155_100_200_split_incfeat_ortho_alph0.pt"):
+def load_model(load_path="model_supervised.pth"):
     model = TrajectoryEmbeddingModel()
 
     target_device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
