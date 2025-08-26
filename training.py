@@ -11,8 +11,9 @@ from tqdm import tqdm
 import wandb
 
 from models.trajectory_embedder import TrajectoryEmbeddingModel
-from losses import L_FeatDiff, L_InfoNCE, L_Residual, L_orthogonal, L_InfoNCE_paper_style
-from datasets import load_dataset, get_train_val_loaders, randomly_augment_seq
+from losses import L_FeatDiff, L_InfoNCE, L_Residual, L_orthogonal
+from datasets import load_dataset, get_train_val_loaders
+from augmentations import randomly_augment_seq
 from inference import evaluate_model_performance
 
 
@@ -33,7 +34,7 @@ def train_model(config, model_save_path="./out/models/"):
         strict_sequence_train_val_split=config["strict_sequence_train_val_split"],
         include_partial_sequences_train=config["include_partial_sequences_train"],
         include_partial_sequences_val=config["include_partial_sequences_val"],
-        random_state=config["random_state"]
+        random_state=config["random_state"],
     )
     additional_val_loader = None
     if config["additional_val_data"]:
@@ -47,7 +48,9 @@ def train_model(config, model_save_path="./out/models/"):
 
     device = torch.device(config["device"])
 
-    model = TrajectoryEmbeddingModel(alph0=config["alph0"])
+    model = TrajectoryEmbeddingModel(
+        include_transformer_encdoder=config["transformer_encoder_feature_extractor"]
+    )
     model = model.to(device)
 
     optimizer_stage1 = optim.Adam(
@@ -175,27 +178,20 @@ def full_training_loop(
         w_feat_sum = 0.0
         w_ortho_sum = 0.0
         for batch_data in train_loader:
-            seq_norm = batch_data["trajectories"].to(device).squeeze(0)  # (P, F, 2)
+            seq_train = batch_data["trajectories"].to(device).squeeze(0)  # (P, F, 2)
             seq_labels = batch_data["labels"].to(device).squeeze(0)  # (P,)
             seq_t = batch_data["times"].to(device).squeeze(0)  # (P, F)
-            num_points = seq_norm.shape[0]
-            seq_norm = randomly_augment_seq(seq=seq_norm, config=config)
+            num_points = seq_train.shape[0]
+            seq_train = randomly_augment_seq(seq=seq_train, config=config)
 
             optimizer.zero_grad()
-            f, B, h_t = model(seq_norm, seq_t)
+            f, B, h_t = model(seq_train, seq_t)
 
             B_flat = B.view(num_points, -1)  # (P, 2F*rank)
 
             f_norm = F.normalize(f, dim=1)
             B_flat_norm = F.normalize(B_flat, dim=1)
             v = torch.cat((f_norm, B_flat_norm), dim=1)
-
-            if config["use_sequence_randomization"]:
-                seq_train = randomize_sequences_for_class(
-                    seq_x=seq_norm, seq_labels=seq_labels, epoch=epoch, device=device
-                )
-            else:
-                seq_train = seq_norm
 
             x_reconstructed = reconstruct_x(seq_train, B)  # (P, F, 2)
             x_reconstructed_permuted = x_reconstructed.permute(0, 2, 1)
@@ -253,7 +249,7 @@ def full_training_loop(
         if metrics["mean_clustering_error"] < best_mean_clustering_error:
             best_model_weights = copy.deepcopy(model.state_dict())
             best_mean_clustering_error = metrics["mean_clustering_error"]
- 
+
         if wandb.run:
             wandb.log(metrics, step=epoch + 1)
 
@@ -288,23 +284,3 @@ def reconstruct_x(x_original, B_estimated):
         except Exception as e:
             print(f"Error occurred in x reconstruction: {e}")
     return x_reconst
-
-
-def randomize_sequences_for_class(seq_x, seq_labels, epoch, device):
-    generator = torch.Generator(device=device)
-    generator.manual_seed(42 + epoch)
-
-    seq_x_train = seq_x.clone()
-
-    if torch.rand(1, generator=generator, device=device) > 0.5:
-        unique_labels = torch.unique(seq_labels)
-        for label in unique_labels:
-            class_indices = seq_labels == label
-            if class_indices.sum() > 1:
-                seq_class = seq_x[class_indices]
-                num_seq_class = seq_class.size(0)
-                idx = torch.randperm(num_seq_class, generator=generator, device=device)
-                seq_class_shuffled = seq_class[idx]
-                seq_x_train[class_indices] = seq_class_shuffled
-
-    return seq_x_train

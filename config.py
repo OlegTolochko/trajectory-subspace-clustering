@@ -16,6 +16,7 @@ CONFIG = {
     "w_feat": 1.0,  # unspecified; weight for feature difference loss
     "device": "cuda",  # Options: cuda, cpu, mps
     """Additional adjustable parameters:"""
+    "transformer_encoder_feature_extractor": False,  # If True utilizes different Feature Extractor with an TransformerEncoder layer
     "validation_frequency": 1,  # set to 1 if validation should be performed every single time
     "include_partial_sequences_train": True,  # Train set also includes partial versions of sequences, True to include
     "include_partial_sequences_val": True,  # Validation set also includes partial versions of sequences, True to include

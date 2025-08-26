@@ -74,7 +74,8 @@ class FeatureExtractorTransformer(nn.Module):
             dropout=dropout_rate,
             batch_first=True,
         )
-        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=2)
+        # num layers may be adjusted:
+        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=1)
 
         self.final_projection = nn.Linear(512, 128)
 

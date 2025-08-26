@@ -18,11 +18,8 @@ from losses import (
     L_orthogonal,
     L_InfoNCE_unsupervised,
 )
-from datasets import (
-    load_dataset,
-    get_train_val_loaders,
-    randomly_augment_seq,
-)
+from datasets import load_dataset, get_train_val_loaders
+from augmentations import randomly_augment_seq
 from inference import evaluate_model_performance
 
 
@@ -55,7 +52,9 @@ def train_model_unsupervised(config, model_save_path="./out/models/"):
 
     device = torch.device(config["device"])
 
-    model = TrajectoryEmbeddingModel(alph0=config["alph0"])
+    model = TrajectoryEmbeddingModel(
+        include_transformer_encdoder=config["transformer_encoder_feature_extractor"]
+    )
     model = model.to(device)
 
     optimizer_stage1 = optim.Adam(
@@ -311,23 +310,3 @@ def reconstruct_x(x_original, B_estimated):
         except Exception as e:
             print(f"Error occurred in x reconstruction: {e}")
     return x_reconst
-
-
-def randomize_sequences_for_class(seq_x, seq_labels, epoch, device):
-    generator = torch.Generator(device=device)
-    generator.manual_seed(42 + epoch)
-
-    seq_x_train = seq_x.clone()
-
-    if torch.rand(1, generator=generator, device=device) > 0.5:
-        unique_labels = torch.unique(seq_labels)
-        for label in unique_labels:
-            class_indices = seq_labels == label
-            if class_indices.sum() > 1:
-                seq_class = seq_x[class_indices]
-                num_seq_class = seq_class.size(0)
-                idx = torch.randperm(num_seq_class, generator=generator, device=device)
-                seq_class_shuffled = seq_class[idx]
-                seq_x_train[class_indices] = seq_class_shuffled
-
-    return seq_x_train
