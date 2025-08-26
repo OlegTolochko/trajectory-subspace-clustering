@@ -62,6 +62,8 @@ def train(sweep: bool = False, unsupervised: bool = False):
             for key in wandb.config.as_dict():
                 config[key] = wandb.config.as_dict().get(key)
         if unsupervised:
+            # in the unsupervised objective, validation is done on the ful dataset
+            config["validation_split"] = 1.0
             model = train_model_unsupervised(config=config)
         else:
             model = train_model(config=config)

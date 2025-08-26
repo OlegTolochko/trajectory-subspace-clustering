@@ -1,7 +1,12 @@
 data/
 out/models/*
 out/multiple_runs_results/*
-!out/models/model-unsupervised.pth
+out/plots/*
+wand_visualization/
+!out/models/model_unsupervised.pth
+!out/models/model_unsupervised_transformer.pth
+!out/models/model_supervised.pth
+!out/models/model_supervised_transformer.pth
 
 __pycache__/
 models/__pycache__

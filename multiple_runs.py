@@ -39,10 +39,8 @@ def run_multiple_experiments(
         run_config = copy.deepcopy(config)
         run_config["random_state"] = random_state
 
-        # Load dataset
         main_dataset = load_dataset(run_config["train_data"])
 
-        # Get train/val loaders with different random state
         main_train_loader, main_val_loader = get_train_val_loaders(
             main_dataset,
             val_split_size=run_config["validation_split"],
@@ -56,21 +54,18 @@ def run_multiple_experiments(
             random_state=random_state,
         )
 
-        # Train the model
         if unsupervised:
             model = train_model_unsupervised(config=run_config)
         else:
             model = train_model(config=run_config)
 
-        # Evaluate the model on validation data
         mean_clustering_error = evaluate_model_performance(
             model,
             main_val_loader,
             run_config["train_data"],
-            generate_video=False,  # Disable video generation for multiple runs
+            generate_video=False,
         )
 
-        # Store results
         run_result = {
             "run_idx": run_idx,
             "random_state": random_state,
@@ -82,7 +77,6 @@ def run_multiple_experiments(
             f"Run {run_idx + 1} completed. Mean clustering error: {mean_clustering_error:.4f}"
         )
 
-    # Calculate aggregated metrics
     mean_errors = [result["mean_clustering_error"] for result in all_results]
 
     aggregated_metrics = {
@@ -96,7 +90,6 @@ def run_multiple_experiments(
         "all_results": all_results,
     }
 
-    # Print aggregated metrics
     print("\n=== Aggregated Metrics ===")
     print(f"Number of runs: {num_runs}")
     print(
@@ -115,14 +108,13 @@ def run_multiple_experiments(
         f"Maximum mean clustering error: {aggregated_metrics['mean_clustering_error_max']:.4f}"
     )
 
-    # Save results to file
+    # save results
     if save_results:
         timestamp = datetime.now().strftime("%Y%m%dT%H%M%S")
         results_file = os.path.join(
             results_dir, f"multiple_runs_results_{timestamp}{name}.json"
         )
 
-        # Convert numpy types to Python types for JSON serialization
         json_ready_metrics = copy.deepcopy(aggregated_metrics)
         json_ready_metrics["mean_clustering_error_avg"] = float(
             json_ready_metrics["mean_clustering_error_avg"]
@@ -164,7 +156,6 @@ def load_and_analyze_results(results_file: str) -> Dict[str, Any]:
     with open(results_file, "r") as f:
         results = json.load(f)
 
-    # Print aggregated metrics
     print("\n=== Aggregated Metrics from Saved Results ===")
     print(f"Number of runs: {results['num_runs']}")
     print(f"Average mean clustering error: {results['mean_clustering_error_avg']:.4f}")
