@@ -5,7 +5,7 @@ def load_sweep_config(
     use_full_shift_augmentation=True,
     occlude_points=True,
     occlude_chunkwise=True,
-    optimize_lr=False
+    optimize_lr=False,
 ):
     sweep_config = {"method": method}
 

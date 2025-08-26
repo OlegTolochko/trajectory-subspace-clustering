@@ -5,7 +5,9 @@ import seaborn as sns
 from inference import load_model
 
 
-def test_orthogonality(save_plots=True, output_dir="out/plots/", tick_frequency=4, font_size=18):
+def test_orthogonality(
+    save_plots=True, output_dir="out/plots/", tick_frequency=4, font_size=18
+):
     model = load_model()
     subspace_estimator = model.subspace_estimator
     device = next(subspace_estimator.parameters()).device
@@ -29,6 +31,7 @@ def test_orthogonality(save_plots=True, output_dir="out/plots/", tick_frequency=
 
     if save_plots:
         import os
+
         os.makedirs(output_dir, exist_ok=True)
 
     tick_positions = range(0, N_basis_functions, tick_frequency)
@@ -37,16 +40,18 @@ def test_orthogonality(save_plots=True, output_dir="out/plots/", tick_frequency=
     # Gramian Matrix:
     plt.figure(figsize=(12, 10))
     ax1 = sns.heatmap(sim_matrix, cmap="coolwarm", center=0)
-    
+
     ax1.set_xticks(tick_positions)
     ax1.set_xticklabels(tick_labels, fontsize=font_size)
     ax1.set_yticks(tick_positions)
     ax1.set_yticklabels(tick_labels, fontsize=font_size)
-    
-    plt.title("Gramian Matrix (Dot Products) of Basis Functions", fontsize=font_size+2)
+
+    plt.title(
+        "Gramian Matrix (Dot Products) of Basis Functions", fontsize=font_size + 2
+    )
     plt.xlabel("Basis Function Index", fontsize=font_size)
     plt.ylabel("Basis Function Index", fontsize=font_size)
-    
+
     cbar = ax1.collections[0].colorbar
     cbar.ax.tick_params(labelsize=font_size)
 
@@ -64,16 +69,19 @@ def test_orthogonality(save_plots=True, output_dir="out/plots/", tick_frequency=
     # Cosine Similarity Matrix:
     plt.figure(figsize=(12, 10))
     ax2 = sns.heatmap(cosine_sim_matrix, cmap="coolwarm", vmin=-1, vmax=1, center=0)
-    
+
     ax2.set_xticks(tick_positions)
     ax2.set_xticklabels(tick_labels, fontsize=font_size)
     ax2.set_yticks(tick_positions)
     ax2.set_yticklabels(tick_labels, fontsize=font_size)
-    
-    plt.title(f"Model 1: Cosine Similarity for Seq. len of {seq_length}", fontsize=font_size+2)
+
+    plt.title(
+        f"Model 1: Cosine Similarity for Seq. len of {seq_length}",
+        fontsize=font_size + 2,
+    )
     plt.xlabel("Basis function Index", fontsize=font_size)
     plt.ylabel("Basis function Index", fontsize=font_size)
-    
+
     cbar = ax2.collections[0].colorbar
     cbar.ax.tick_params(labelsize=font_size)
 
